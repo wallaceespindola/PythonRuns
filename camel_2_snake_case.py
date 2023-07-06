@@ -1,6 +1,7 @@
 import argparse
 import re
 
+# Example: getValue -> get_value
 def camel_2_snake_case(s):
     if s.isdigit() or not s.strip():
         return s  # Nothing to be done
