@@ -13,6 +13,7 @@ Tests on Python Code Examples.
 * [remove_background.py](sources%2Fremove_background.py): removes background from images, letting only the main subject.
 * [split_script.py](sources%2Fsplit_script.py): splits a text input file (like a log) into a given number of chunks.
 * [fake_data.py](sources%2Ffake_data.py): creates fake test data using Faker.
+* [qrcode.py](sources%2Fqrcode.py): creates a QR-Code from your data.
 
 ### Author
 
