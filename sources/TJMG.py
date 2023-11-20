@@ -1,4 +1,5 @@
 import requests
+import json
 
 
 def query_cnj_api(process_number):
@@ -29,4 +30,7 @@ def query_cnj_api(process_number):
 print("####### Chamando public API TJMG - Proc Num, resultados no console...")
 process_number = "13668284120218130024"
 response = query_cnj_api(process_number)
-print(response)
+
+# Pretty print the JSON response
+pretty_json = json.dumps(response, indent=4)
+print(pretty_json)

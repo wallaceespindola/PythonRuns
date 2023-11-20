@@ -22,6 +22,8 @@ headers = {
     'Content-Type': 'application/json'
 }
 
-response = requests.request("POST", url, headers=headers, data=payload)
+response = requests.request("POST", url, headers=headers, data=payload).json()
 
-print(response.text)
+# Pretty print the JSON response
+pretty_json = json.dumps(response, indent=4)
+print(pretty_json)
