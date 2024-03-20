@@ -1,19 +1,23 @@
 import argparse
+import datetime
 import logging
+
 
 # split a text input file (like a log) into a given number of chunks.
 # Example: 1 big file split into 10 small ones.
 # Use: python split_script.py path_to_your_log_file.log 10
 def split_file(file_path, num_chunks):
     # Set up logging to file and console
-    logging.basicConfig(filename='split_file_log.log', level=logging.INFO, format='%(asctime)s - %(message)s')
+    date_format = '%Y-%m-%d_%H:%M:%S'
+    logging.basicConfig(filename=f"split_file_{datetime.datetime.now().strftime(date_format)}.log",
+                        level=logging.INFO, format='%(asctime)s - %(message)s')
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(message)s')
     console.setFormatter(formatter)
-    logging.getLogger('').addHandler(console)
+    logging.getLogger('split_file').addHandler(console)
 
-    logging.info(f'Starting to split file: {file_path} into {num_chunks} chunks.')
+    logging.info(f"Starting to split file: {file_path} into {num_chunks} chunks.")
 
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -26,9 +30,10 @@ def split_file(file_path, num_chunks):
                 output_file.writelines(lines[start:end])
 
             # Log the output file name
-            logging.info(f'Split file created: {output_file_name}')
+            logging.info(f"Split file created: {output_file_name}")
 
     logging.info(f'Finished splitting file: {file_path}')
+
 
 # Parsing command line arguments
 parser = argparse.ArgumentParser(description='Split a large log file into smaller chunks.')
