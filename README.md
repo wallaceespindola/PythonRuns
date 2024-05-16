@@ -16,8 +16,14 @@ Tests on Python Code Examples.
 * [qrcode.py](sources%2Fqrcode.py): creates a QR-Code from your data.
 * [fines_ibama_brazil.py](sources%2Ffines_ibama_brazil.py): Enviromental fines research in Brazil government site.
 
-### Author
-* Wallace Espindola, Sr. Software Engineer / Java & Python Dev (wallace.espindola@gmail.com)
+## Author
 
-### License
-**Free Software, Apache 2.0**
+* Wallace Espindola, Sr. Software Engineer / Java & Python Dev
+* E-mail: wallace.espindola@gmail.com
+* LinkedIn: https://www.linkedin.com/in/wallaceespindola/
+* Website: https://wtechitsolutions.com/
+
+## License
+
+* This project is released under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
+* Copyright © 2024 [Wallace Espindola](https://github.com/wallaceespindola/).
