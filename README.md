@@ -1,7 +1,35 @@
 ![Python](https://www.python.org/static/community_logos/python-logo-generic.svg)
 
 # PythonRuns
+
 Tests on Python Code Examples.
+
+## Installation
+
+Install and activate the virtual environment:
+```sh
+python3 -m virtualenv .venv
+source .venv/bin/activate
+```
+
+Install the needed dependencies:
+```sh
+pip install -r requirements.txt
+```
+
+## How to Run
+
+To run some function:
+
+```sh
+python3 -m sources.file_to_run
+```
+
+To run all the tests in directory 'tests':
+
+```sh
+python -m unittest discover -s tests
+```
 
 ## Examples
 * [calculate_power.py](sources%2Fcalculate_power.py): calculate a power x^y of a number.
