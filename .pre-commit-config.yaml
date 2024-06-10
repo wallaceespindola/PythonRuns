@@ -40,13 +40,13 @@ repos:
       - id: prettier # Formats JSON, YAML, and Markdown files
         files: \.(json|yaml|yml|md)$
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.8
-    hooks:
-      - id: ruff # Run the ruff linter.
-        args: [--fix]
-
-      - id: ruff-format # Run the ruff formatter.
+  # Conflicting with black, giving contradictory results
+  #  - repo: https://github.com/astral-sh/ruff-pre-commit
+  #    rev: v0.4.8
+  #    hooks:
+  #      - id: ruff # Run the ruff linter.
+  #        args: [--fix]
+  #      - id: ruff-format # Run the ruff formatter.
 
   - repo: https://github.com/google/yapf
     rev: v0.40.2
@@ -75,7 +75,7 @@ repos:
     rev: v1.3.3
     hooks:
       - id: python-safety-dependencies-check # Checks Python dependencies for known security vulnerabilities
-        files: pyproject.toml, pip_requirements.txt, pip_dev_requirements.txt, pip_doc_requirements.txt
+        files: pyproject.toml, requirements.txt
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.3.0
