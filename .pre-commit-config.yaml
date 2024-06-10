@@ -1,0 +1,133 @@
+repos:
+  - repo: local
+    hooks:
+      - id: pytest-check # Runs pytest on the codebase to execute tests
+        name: pytest-check
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace # Removes trailing whitespace
+      - id: end-of-file-fixer # Ensures files end with a newline
+      - id: check-yaml # Validates YAML config files
+      - id: check-toml # Validates TOML config files
+      - id: check-json # Validates JSON files
+      - id: check-added-large-files # Prevents large files from being added
+      - id: check-merge-conflict # Detects merge conflict markers
+      - id: check-case-conflict # Detects case conflicts in filenames
+      - id: check-ast # Validates Python files for syntax errors
+      - id: detect-private-key # Prevents private keys from being committed
+      - id: check-docstring-first # Checks if module-level docstring is present and at the beginning file.
+      - id: debug-statements # Identifies the usage of debugging statements like print, pdb, etc.
+
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1
+    hooks:
+      - id: yamllint # Lints YAML files for style and syntax
+        args: # allows lines up to 120 characters, ignores rule of --- at the beginning
+          [
+            "-d",
+            "{extends: default, rules: {line-length: {max: 120}, document-start: {present: false}}}",
+          ]
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.5.0
+    hooks:
+      - id: prettier # Formats JSON, YAML, and Markdown files
+        files: \.(json|yaml|yml|md)$
+
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black # Formats Python code to adhere to PEP 8
+        language_version: python3.11
+        args: ["--line-length", "120"] # allows lines up to 120 characters
+
+# ============================================================================================================
+# ================ From this point we raise the bar with more strict rules, comment if needed ================
+# ============================================================================================================
+#
+#  - repo: https://github.com/psf/black
+#    rev: 24.4.2
+#    hooks:
+#      - id: black # Formats Python code to adhere to PEP 8
+#        language_version: python3.11
+#        args: ["--line-length", "120"] # allows lines up to 120 characters
+#      - id: black-jupyter
+#        language_version: python3.11
+#
+#  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+#    rev: v1.3.3
+#    hooks:
+#      - id: python-safety-dependencies-check # Checks Python dependencies for known security vulnerabilities
+#        files: pyproject.toml, pip_requirements.txt, pip_dev_requirements.txt, pip_doc_requirements.txt
+#
+#  - repo: https://github.com/codespell-project/codespell
+#    rev: v2.3.0
+#    hooks:
+#      - id: codespell # Checks for common misspellings in text files
+#
+#  - repo: https://github.com/astral-sh/ruff-pre-commit
+#    rev: v0.4.8
+#    hooks:
+#      - id: ruff # Run the ruff linter.
+#        args: [--fix]
+#
+#      - id: ruff-format # Run the ruff formatter.
+#
+#  - repo: https://github.com/google/yapf
+#    rev: v0.40.2
+#    hooks:
+#      - id: yapf # Google formatter to keep PEP 8 rules
+#        name: "yapf"
+#        args: [--style, google]
+#
+#  - repo: https://github.com/PyCQA/isort
+#    rev: 5.13.2
+#    hooks:
+#      - id: isort # Sorts Python imports
+#        args: ["--profile", "black"] # adheres to black formatting style
+#
+#  - repo: https://github.com/PyCQA/pydocstyle
+#    rev: 6.3.0
+#    hooks:
+#      - id: pydocstyle # Ensures compliance with Python docstring conventions
+#
+#  - repo: https://github.com/PyCQA/flake8
+#    rev: 7.0.0
+#    hooks:
+#      - id: flake8 # Checks Python code for style and quality issues
+#        additional_dependencies: [ flake8-bugbear, flake8-docstrings ]
+#        args: # allows lines up to 120 characters, ignores missing docstring warnings
+#          [
+#            --max-line-length=120,
+#            --ignore=D100,
+#            D101,
+#            D102,
+#            D103,
+#            D104,
+#            D105,
+#            D107,
+#          ]
+#
+#  - repo: https://github.com/pre-commit/mirrors-mypy
+#    rev: v1.10.0
+#    hooks:
+#      - id: mypy # Static type checker for Python
+#
+#  - repo: https://github.com/PyCQA/bandit
+#    rev: 1.7.8
+#    hooks:
+#      - id: bandit # Security linter for Python code
+#        additional_dependencies: [ "toml" ]
+#
+#  - repo: https://github.com/pylint-dev/pylint
+#    rev: v3.2.3
+#    hooks:
+#      - id: pylint # Checks Python code for errors and coding standards
+#        # allows lines up to 120 characters, ignores missing docstring warnings
+#        args: [ "--max-line-length=120", "--disable=C0111" ]

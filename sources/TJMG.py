@@ -12,15 +12,9 @@ def query_cnj_api(process_number):
     url = "https://api-publica.datajud.cnj.jus.br/api_publica_tjmg/_search"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "APIKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw=="
+        "Authorization": "APIKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==",
     }
-    json_data = {
-        "query": {
-            "match": {
-                "numeroProcesso": process_number
-            }
-        }
-    }
+    json_data = {"query": {"match": {"numeroProcesso": process_number}}}
 
     response = requests.post(url, json=json_data, headers=headers)
     return response.json()
