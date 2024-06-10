@@ -3,10 +3,9 @@ import unittest
 
 
 class TestExamples(unittest.TestCase):
-
     def test_path_separator(self):
         """
-        Test valid for windows, mac or linux, gets the default separator for the current OS ('/' or '\')
+        Test valid for windows, mac or linux, gets the default separator for the current OS ('/' or '\').
         """
         print("\n1) os.sep: " + os.sep)  # Outputs the path separator character
         print(os.sep + "test1")

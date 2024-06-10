@@ -18,7 +18,7 @@ def camel_2_snake_case(s):
 
 
 # Parsing command line arguments
-parser = argparse.ArgumentParser(description="Coverts an input value from camel case to snake case.")
+parser = argparse.ArgumentParser(description="Converts an input value from camel case to snake case.")
 parser.add_argument("value", type=str, help="Value to be converted from camel case to snake case.")
 
 args = parser.parse_args()

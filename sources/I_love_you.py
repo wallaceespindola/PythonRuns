@@ -1,4 +1,4 @@
-def print_text(text):
+def print_text_heart(text):
     print(f"\n####### {text} te amo !!! #######")
     print(
         "\n".join(
@@ -15,4 +15,4 @@ def calc(x, y):
 
 
 if __name__ == "__main__":
-    print_text("Janaina")  # str must be 7 characters
+    print_text_heart("Janaina")  # str must be 7 characters

@@ -1,6 +1,6 @@
-from rembg import remove
-from PIL import Image, ImageFile
 import cv2
+from PIL import Image, ImageFile
+from rembg import remove
 
 print("####### Test: remove background from image #######")
 

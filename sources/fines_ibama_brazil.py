@@ -1,6 +1,7 @@
 # REFERENCE URL: 'http://dadosabertos.ibama.gov.br/dados/SICAFI/AC/Quantidade/multasDistribuidasBensTutelados.json'
 
 import locale
+
 import pandas as pd
 import requests
 import urllib3

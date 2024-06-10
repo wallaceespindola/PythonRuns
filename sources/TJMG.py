@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 
 
 def query_cnj_api(process_number):
