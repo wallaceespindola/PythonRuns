@@ -57,6 +57,7 @@ with open('data.pkl', 'rb') as f:
     data = pickle.load(f)
 print(data)
 """
+
 import pickle
 
 
@@ -67,7 +68,7 @@ def save_text_to_pickle(file_name, text_data):
     :param file_name: The name of the file to save the text data to.
     :param text_data: The text data to be saved.
     """
-    with open(file_name, 'wb') as file:
+    with open(file_name, "wb") as file:
         pickle.dump(text_data, file)
     print(f"Text data has been pickled and saved to '{file_name}'.")
 
@@ -79,7 +80,7 @@ def load_text_from_pickle(file_name):
     :param file_name: The name of the file to load the text data from.
     :return: The loaded text data.
     """
-    with open(file_name, 'rb') as file:
+    with open(file_name, "rb") as file:
         text_data = pickle.load(file)
     print(f"Loaded text data from '{file_name}': {text_data}")
     return text_data
@@ -88,7 +89,7 @@ def load_text_from_pickle(file_name):
 # Example usage
 if __name__ == "__main__":
     text_to_save = "Hello, this is some text that will be pickled."
-    pickle_file_name = 'text_data.pkl'
+    pickle_file_name = "text_data.pkl"
 
     # Save the text data to a pickle file
     save_text_to_pickle(pickle_file_name, text_to_save)

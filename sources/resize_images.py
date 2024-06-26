@@ -53,7 +53,7 @@ def compress_jpg(img, img_format, img_size, input_path, max_size_kb):
         quality -= 5
     # Save the final image with the reduced quality
     print(f"=====> Final size for file [{input_path}] - [{round(img_size, 2)}] Kb - quality [{quality}]")
-    with open(input_path, 'wb') as f:
+    with open(input_path, "wb") as f:
         f.write(buffer.getvalue())
 
 

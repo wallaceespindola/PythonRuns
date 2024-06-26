@@ -1,5 +1,6 @@
 import os
 import subprocess
+
 from resize_images import resize_image
 
 
@@ -22,9 +23,7 @@ def compress_jpeg(input_path, max_size_kb):
     output_path = input_path + ".tmp.jpg"
 
     # Compress using mozjpeg
-    subprocess.run([
-        'cjpeg', '-quality', '85', '-outfile', output_path, input_path
-    ])
+    subprocess.run(["cjpeg", "-quality", "85", "-outfile", output_path, input_path])
 
     # Check the size of the new file
     new_size = os.path.getsize(output_path) / 1024  # Size in KB
@@ -38,9 +37,7 @@ def compress_jpeg(input_path, max_size_kb):
         # Reduce quality step by step
         quality = 80
         while new_size > max_size_kb and quality > 10:
-            subprocess.run([
-                'cjpeg', '-quality', str(quality), '-outfile', output_path, input_path
-            ])
+            subprocess.run(["cjpeg", "-quality", str(quality), "-outfile", output_path, input_path])
             new_size = os.path.getsize(output_path) / 1024  # Size in KB
             quality -= 5
 
@@ -61,9 +58,9 @@ def process_images(folder, max_size_kb=100):
     for root, dirs, files in os.walk(folder):
         for file in files:
             file_path = os.path.join(root, file)
-            if file.lower().endswith(('.jpg', '.jpeg')):
+            if file.lower().endswith((".jpg", ".jpeg")):
                 compress_jpeg(file_path, max_size_kb)
-            elif file.lower().endswith('.png'):
+            elif file.lower().endswith(".png"):
                 compress_png(file_path, max_size_kb)
 
 

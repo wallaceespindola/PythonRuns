@@ -28,8 +28,8 @@ repos:
         args: ["--pytest-test-first"] # Ensure tests match test_.*\.py
       - id: requirements-txt-fixer # Ensures requirements.txt files are formatted correctly
         files: "requirements.txt|requirements-dev.txt"
-#      - id: no-commit-to-branch # Prevents committing to specified branches
-#        args: ["--branch", "main", "--branch", "master"]
+  #      - id: no-commit-to-branch # Prevents committing to specified branches
+  #        args: ["--branch", "main", "--branch", "master"]
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.35.1

@@ -161,3 +161,4 @@ cython_debug/
 
 # Ignored test outputs
 *.docx
+*.pkl
