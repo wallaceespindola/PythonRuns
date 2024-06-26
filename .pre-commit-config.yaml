@@ -52,7 +52,7 @@ repos:
       - id: codespell # Spell checking - checks for common misspellings in text files
         name: codespell
         description: Checks for common misspellings in text files.
-        entry: codespell --skip="*.js,*.html,*.css, *.svg" --ignore-words ignore-spelling-words.txt
+        entry: codespell --skip="*.js,*.html,*.css, *.csv, *.svg" --ignore-words ignore-spelling-words.txt
         language: python
         types: [text]
 
