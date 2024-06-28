@@ -11,7 +11,7 @@ def plot_graph_1():
     y2 = np.cos(x)
     y3 = np.tan(x)
 
-    # Create a figure with 1 row and 3 columns of subplots
+    # Create a figure and 3 subplots in 1 row with a figure size of 12x8 inches
     fig, ax = plt.subplots(1, 3, figsize=(12, 8))
 
     # Plot data on each subplot
@@ -37,7 +37,7 @@ def plot_graph_2():
     y2 = np.cosh(x)
     y3 = np.tanh(x)
 
-    # Create a figure with 1 row and 3 columns of subplots
+    # Create a figure and 3 subplots in 1 row with a figure size of 12x8 inches
     fig, ax = plt.subplots(1, 3, figsize=(12, 8))
 
     # Plot data on each subplot
@@ -63,7 +63,7 @@ def plot_graph_3():
     y2 = np.arccos(x)
     y3 = np.arctan(x)
 
-    # Create a figure with 1 row and 3 columns of subplots
+    # Create a figure and 3 subplots in 1 row with a figure size of 12x8 inches
     fig, ax = plt.subplots(1, 3, figsize=(12, 8))
 
     # Plot data on each subplot
