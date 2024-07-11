@@ -22,3 +22,6 @@ twine==5.1.0
 unittest-xml-reporting==3.2.0
 urllib3==2.2.2
 wheel==0.43.0
+tqdm==4.66.4
+progress==1.6
+paramiko==3.4.0
