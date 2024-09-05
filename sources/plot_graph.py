@@ -28,6 +28,7 @@ def plot_graph_1():
     plt.tight_layout()  # Adjust subplots to fit into the figure area.
     plt.show()
 
+
 def plot_graph_2():
     print("Plotting a graph with 3 subplots: sinh, cosh, tanh")
 
@@ -54,6 +55,7 @@ def plot_graph_2():
     plt.tight_layout()  # Adjust subplots to fit into the figure area.
     plt.show()
 
+
 def plot_graph_3():
     print("Plotting a graph with 3 subplots: arcsin, arccos, arctan")
 
@@ -79,6 +81,7 @@ def plot_graph_3():
     # Display the figure
     plt.tight_layout()  # Adjust subplots to fit into the figure area.
     plt.show()
+
 
 if __name__ == "__main__":
     plot_graph_1()

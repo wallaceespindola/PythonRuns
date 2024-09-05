@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 def long_process_bar():
     print("Progress bar with progress")
-    bar = Bar('Processing', max=50)
+    bar = Bar("Processing", max=50)
     for _ in range(50):
         time.sleep(0.1)  # Simulate work being done
         bar.next()

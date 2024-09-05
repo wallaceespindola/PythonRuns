@@ -8,38 +8,43 @@ conn = sqlite3.connect(":memory:")
 cursor = conn.cursor()
 
 # Create a table in the in-memory database
-cursor.execute('''
+cursor.execute(
+    """
 CREATE TABLE IF NOT EXISTS data (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     info TEXT NOT NULL
 )
-''')
+"""
+)
 conn.commit()
 
 # Define the entry variable globally to be used inside functions
 entry = None
+
 
 # Function to save data
 def save_data():
     global entry
     info = entry.get()
     if info:
-        cursor.execute('INSERT INTO data (info) VALUES (?)', (info,))
+        cursor.execute("INSERT INTO data (info) VALUES (?)", (info,))
         conn.commit()
         entry.delete(0, tk.END)
         messagebox.showinfo("Success", "Data saved successfully!")
     else:
         messagebox.showwarning("Warning", "Please enter some data.")
 
+
 # Function to retrieve data
 def retrieve_data():
-    cursor.execute('SELECT * FROM data')
+    cursor.execute("SELECT * FROM data")
     rows = cursor.fetchall()
     result = "\n".join([f"ID: {row[0]}, Info: {row[1]}" for row in rows])
     if result:
         messagebox.showinfo("Retrieved Data", result)
     else:
         messagebox.showinfo("No Data", "No data found in the database.")
+
 
 def main():
     global entry
@@ -66,6 +71,7 @@ def main():
 
     # Close database connection when the app is closed
     conn.close()
+
 
 if __name__ == "__main__":
     main()
