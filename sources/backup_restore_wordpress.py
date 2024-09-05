@@ -20,14 +20,14 @@ REMOTE_DB_USER = 'aaaa'
 REMOTE_DB_PASSWORD = 'aaaa123'
 
 # DB dump files
-DB_DUMP_LOCAL_FILE_NAME = 'backup_local.sql'
-DB_DUMP_REMOTE_FILE_NAME = 'backup_remote.sql'
+DB_DUMP_LOCAL_FILE_NAME = "backup_local.sql"
+DB_DUMP_REMOTE_FILE_NAME = "backup_remote.sql"
 DB_DUMP_LOCAL_FILE = LOCAL_WP_PATH + DB_DUMP_LOCAL_FILE_NAME
 DB_DUMP_REMOTE_FILE = REMOTE_WP_PATH + DB_DUMP_REMOTE_FILE_NAME
 
 # Files archive
-FILES_ARCHIVE_LOCAL_NAME = 'wp_files_local.tar.gz'
-FILES_ARCHIVE_REMOTE_NAME = 'wp_files_remote.tar.gz'
+FILES_ARCHIVE_LOCAL_NAME = "wp_files_local.tar.gz"
+FILES_ARCHIVE_REMOTE_NAME = "wp_files_remote.tar.gz"
 FILES_ARCHIVE_LOCAL = LOCAL_WP_PATH + FILES_ARCHIVE_LOCAL_NAME
 FILES_ARCHIVE_REMOTE = REMOTE_WP_PATH + FILES_ARCHIVE_REMOTE_NAME
 
@@ -69,7 +69,7 @@ def create_sftp_client_with_pass(server=REMOTE_SERVER, user=REMOTE_USER, passwor
         return None, None
 
 
-def create_sftp_client_with_key(server=REMOTE_SERVER, user=REMOTE_USER, key_file_path='~/.ssh/id_rsa'):
+def create_sftp_client_with_key(server=REMOTE_SERVER, user=REMOTE_USER, key_file_path="~/.ssh/id_rsa"):
     print("SFTP connecting...")
     try:
         key = paramiko.RSAKey.from_private_key_file(os.path.expanduser(key_file_path))
@@ -185,7 +185,8 @@ def transfer_files_local_to_remote():
         sftp.close()
         transport.close()
         print(
-            f"Files transferred to REMOTE server: {REMOTE_WP_PATH}{DB_DUMP_LOCAL_FILE}, {REMOTE_WP_PATH}{FILES_ARCHIVE_LOCAL}")
+            f"Files transferred to REMOTE server: {REMOTE_WP_PATH}{DB_DUMP_LOCAL_FILE}, {REMOTE_WP_PATH}{FILES_ARCHIVE_LOCAL}"
+        )
 
 
 def transfer_files_remote_to_local():
@@ -265,7 +266,7 @@ def restart_remote_apache():
         try:
             restart_cmd = "sudo systemctl restart apache2"
             stdin, stdout, stderr = ssh.exec_command(restart_cmd)
-            stdin.write(REMOTE_PASSWORD + '\n')  # Enter sudo password
+            stdin.write(REMOTE_PASSWORD + "\n")  # Enter sudo password
             stdin.flush()
             stdout.channel.recv_exit_status()  # Wait for command to finish
             ssh.close()
@@ -338,10 +339,7 @@ def check_site_live(url="https://skipy.online/"):
 
     # Using curl to check if the site is live
     try:
-        response = subprocess.check_output(
-            ["curl", "-Is", url],
-            stderr=subprocess.STDOUT
-        ).decode('utf-8')
+        response = subprocess.check_output(["curl", "-Is", url], stderr=subprocess.STDOUT).decode("utf-8")
 
         # Check for HTTP response status
         if "HTTP/2 200" in response or "HTTP/1.1 200" in response:
@@ -351,7 +349,7 @@ def check_site_live(url="https://skipy.online/"):
             print(response)
     except subprocess.CalledProcessError as e:
         print("Failed to reach the site. Error:")
-        print(e.output.decode('utf-8'))
+        print(e.output.decode("utf-8"))
 
 
 def check_site_list_live():
