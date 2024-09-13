@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # File handler for logging to a file
-file_handler = logging.FileHandler('app_monitor.log')
+file_handler = logging.FileHandler("app_monitor.log")
 file_handler.setLevel(logging.INFO)
 
 # Console handler for logging to the console
@@ -24,7 +24,7 @@ console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
 
 # Define a logging format
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(formatter)
 console_handler.setFormatter(formatter)
 
@@ -43,17 +43,17 @@ EXPECTED_STATUS = 200
 load_dotenv()
 
 # Get the user and password from environment variables
-user = os.getenv('USER')
-password = os.getenv('PASSWORD')
+user = os.getenv("USER")
+password = os.getenv("PASSWORD")
 
 # Email configuration
-EMAIL_SUBJECT = 'Alert: one or more URLs are down'
-SMTP_SERVER = 'smtp.gmail.com'
+EMAIL_SUBJECT = "Alert: one or more URLs are down"
+SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USERNAME = os.getenv('SMTP_USERNAME')
-SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
-EMAIL_FROM = os.getenv('EMAIL_FROM')
-EMAIL_TO = os.getenv('EMAIL_TO')
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+EMAIL_FROM = os.getenv("EMAIL_FROM")
+EMAIL_TO = os.getenv("EMAIL_TO")
 
 # ========== end email configs ==========
 
@@ -118,10 +118,10 @@ def send_email(message):
     logger.info("========== Sending notification email... ==========")
     try:
         msg = MIMEMultipart()
-        msg['From'] = EMAIL_FROM
-        msg['To'] = EMAIL_TO
-        msg['Subject'] = EMAIL_SUBJECT
-        msg.attach(MIMEText(message, 'plain'))
+        msg["From"] = EMAIL_FROM
+        msg["To"] = EMAIL_TO
+        msg["Subject"] = EMAIL_SUBJECT
+        msg.attach(MIMEText(message, "plain"))
 
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()  # Secure the connection
@@ -181,9 +181,10 @@ if __name__ == "__main__":
         epilog="Example usage: python app_monitor.py -r",
     )
     parser.add_argument(
-        '-r', '--restart',
-        action='store_true',
-        help='Restart Apache and Python applications if URLs are down.',
+        "-r",
+        "--restart",
+        action="store_true",
+        help="Restart Apache and Python applications if URLs are down.",
     )
 
     # Parse arguments

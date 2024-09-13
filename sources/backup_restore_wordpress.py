@@ -5,19 +5,19 @@ import paramiko
 from paramiko import SFTPClient
 
 # LOCAL server configs
-LOCAL_WP_PATH = r'C:\Users\Edu\Local Sites'
-LOCAL_DB_NAME = 'local'
-LOCAL_DB_USER = 'user'
-LOCAL_DB_PASSWORD = 'password'
+LOCAL_WP_PATH = r"C:\Users\Edu\Local Sites"
+LOCAL_DB_NAME = "local"
+LOCAL_DB_USER = "user"
+LOCAL_DB_PASSWORD = "password"
 
 # REMOTE server configs
-REMOTE_SERVER = 'ipaddrs'  # 'qjump.hstgr.cloud'
-REMOTE_USER = 'user'
-REMOTE_PASSWORD = 'pass'
-REMOTE_WP_PATH = '/var/www/site/'
-REMOTE_DB_NAME = 'site'
-REMOTE_DB_USER = 'aaaa'
-REMOTE_DB_PASSWORD = 'aaaa123'
+REMOTE_SERVER = "ipaddrs"  # 'qjump.hstgr.cloud'
+REMOTE_USER = "user"
+REMOTE_PASSWORD = "pass"
+REMOTE_WP_PATH = "/var/www/site/"
+REMOTE_DB_NAME = "site"
+REMOTE_DB_USER = "aaaa"
+REMOTE_DB_PASSWORD = "aaaa123"
 
 # DB dump files
 DB_DUMP_LOCAL_FILE_NAME = "backup_local.sql"

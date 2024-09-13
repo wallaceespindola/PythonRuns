@@ -1,10 +1,13 @@
-import shortuuid
 import uuid
+
+import shortuuid
+
 
 def generate_short_uuid():
     # Generate a random short UUID
     short_uuid = shortuuid.uuid()
     print("Short UUID:", short_uuid)
+
 
 def convert_standard_to_short():
     # Generate a standard UUID
@@ -15,11 +18,13 @@ def convert_standard_to_short():
     print("Standard UUID4:", standard_uuid)
     print("Short UUID (from standard):", short_uuid_from_standard)
 
+
 def decode_short_uuid(short_uuid):
     # Decode a short UUID back to the standard UUID format
     decoded_uuid = shortuuid.decode(short_uuid)
     print("Encoded short UUID:", short_uuid)
     print("Decoded long UUID:", decoded_uuid)
+
 
 def main():
     print("\n============ Examples - encoding/decoding UUID x ShortUUID ============\n")
@@ -35,6 +40,7 @@ def main():
     short_uuid_example = shortuuid.uuid()
     print("\nDecoding Example:")
     decode_short_uuid(short_uuid_example)
+
 
 if __name__ == "__main__":
     main()
