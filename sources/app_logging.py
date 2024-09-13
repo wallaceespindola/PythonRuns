@@ -1,26 +1,37 @@
 import logging
 
-# Create or get a logger
-logger = logging.getLogger("example_logger")
-
-# Set the minimum level of log messages the logger will handle
+# Set up logging to file and console
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# Create a handler and set its level
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.DEBUG)
+# File handler for logging to a file
+file_handler = logging.FileHandler('app_logging.log')
+file_handler.setLevel(logging.DEBUG)
 
-# Create a formatter and attach it to the handler
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-stream_handler.setFormatter(formatter)
+# Console handler for logging to the console
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
 
-# Attach the handler to the logger
-logger.addHandler(stream_handler)
+# Define a logging format
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
 
-# Log messages
-logger.info("####### App logging examples with python #######")
-logger.debug("This is a debug message")
-logger.info("This is an info message")
-logger.warning("This is a warning message")
-logger.error("This is an error message")
-logger.critical("This is a critical message")
+# Add handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+def log_messages():
+    """
+    Log messages
+    :return: None
+    """
+    logger.info("####### App logging examples with python #######")
+    logger.debug("This is a debug message")
+    logger.info("This is an info message")
+    logger.warning("This is a warning message")
+    logger.error("This is an error message")
+    logger.critical("This is a critical message")
+
+if __name__ == "__main__":
+    log_messages()
