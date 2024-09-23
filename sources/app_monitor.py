@@ -54,8 +54,8 @@ EMAIL_TO = os.getenv("EMAIL_TO")
 
 # List of URLs to check
 URLS = [
-    "http://194.31.150.176:3000/",
-    "http://194.31.150.176:8000/",
+    "http://195.31.150.176:3000/",
+    "http://195.31.150.176:8000/",
 ]
 
 
