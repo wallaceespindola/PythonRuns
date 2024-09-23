@@ -61,9 +61,9 @@ EMAIL_TO = os.getenv("EMAIL_TO")
 URLS = [
     "http://195.31.150.176:3000/",
     "http://195.31.150.176:4000/",
-    "http://195.31.150.176:5000/",
-    "http://195.31.150.176:7000/",
-    "http://195.31.150.176:9000/",
+    "http://195.31.150.176:5000/",  # python
+    "http://195.31.150.176:7000/api",  # python
+    "http://195.31.150.176:9000/",  # python
     # "http://195.31.150.176:6000/",
     # "http://195.31.150.176:8000/",
 ]
@@ -134,6 +134,7 @@ def send_email(message):
 
 
 def main(restart_services):
+
     logger.info("==================================================")
     logger.info("============== Starting URL checks ===============")
     logger.info("==================================================")
@@ -155,9 +156,12 @@ def main(restart_services):
     for url in up_urls:
         logger.info(url)
 
-    logger.warning(">>> URLs that are down:")
-    for url in down_urls:
-        logger.warning(url)
+    if len(down_urls) > 0:
+        logger.warning(">>> URLs that are down:")
+        for url in down_urls:
+            logger.warning(url)
+    else:
+        logger.info(">>> ALL URLS ARE OK, NOTHING DOWN. ")
 
     # Check if any URL checks failed
     if down_urls:
@@ -171,7 +175,7 @@ def main(restart_services):
         message = f"One or more URLs are down:\n\n" + "\n".join(down_urls)
         send_email(message)
     else:
-        logger.info("All URLs are up and running correctly.")
+        logger.info("======= All URLs are up and running correctly. =======")
 
 
 if __name__ == "__main__":
