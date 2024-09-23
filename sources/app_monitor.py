@@ -3,13 +3,12 @@ import logging
 import os
 import smtplib
 import subprocess
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from email.message import EmailMessage
 
 import requests
 from dotenv import load_dotenv
 
-# ========== start log configs ==========
+# ========== Start Log Configs ==========
 
 # Set up logging to file and console
 logger = logging.getLogger(__name__)
@@ -32,19 +31,15 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
-# ========== end log configs ==========
+# ========== End Log Configs ==========
 
 # Expected HTTP response status code
 EXPECTED_STATUS = 200
 
-# ========== start email configs ==========
+# ========== Start Email Configs ==========
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Get the user and password from environment variables
-user = os.getenv("USER")
-password = os.getenv("PASSWORD")
 
 # Email configuration
 EMAIL_SUBJECT = "Alert: one or more URLs are down"
@@ -55,17 +50,12 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 EMAIL_FROM = os.getenv("EMAIL_FROM")
 EMAIL_TO = os.getenv("EMAIL_TO")
 
-# ========== end email configs ==========
+# ========== End Email Configs ==========
 
 # List of URLs to check
 URLS = [
-    "http://195.31.150.176:3000/",
-    "http://195.31.150.176:4000/",
-    "http://195.31.150.176:5000/",  # python
-    "http://195.31.150.176:7000/api",  # python
-    "http://195.31.150.176:9000/",  # python
-    # "http://195.31.150.176:6000/",
-    # "http://195.31.150.176:8000/",
+    "http://194.31.150.176:3000/",
+    "http://194.31.150.176:8000/",
 ]
 
 
@@ -83,7 +73,10 @@ def check_url(url):
             logger.warning(f"URL {url} returned status code {response.status_code}, expected {EXPECTED_STATUS}.")
             return False
     except requests.exceptions.RequestException as e:
-        logger.error(f"Error checking URL {url}: {e}")
+        if "NameResolutionError" in str(e):
+            logger.error(f"DNS resolution failed for {url}. Skipping restart.")
+        else:
+            logger.error(f"Error checking URL {url}: {e}")
         return False
 
 
@@ -105,8 +98,12 @@ def restart_python_apps():
     """
     logger.info("========== Restarting Python applications... ==========")
     try:
-        subprocess.run(["/bin/bash", "./scripts/start_apps.sh"], check=True)
-        logger.info("Python applications restarted successfully.")
+        start_script = "/root/scripts/start_apps.sh"
+        if os.path.exists(start_script):
+            subprocess.run(["/bin/bash", start_script], check=True)
+            logger.info("Python applications restarted successfully.")
+        else:
+            logger.error(f"Failed to restart Python applications: {start_script} script not found.")
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to restart Python applications: {e}")
 
@@ -116,25 +113,53 @@ def send_email(message):
     Sends an email with the specified message.
     """
     logger.info("========== Sending notification email... ==========")
+    # Validate email configuration
+    missing_vars = []
+    for var_name, var_value in [
+        ("SMTP_USERNAME", SMTP_USERNAME),
+        ("SMTP_PASSWORD", SMTP_PASSWORD),
+        ("EMAIL_FROM", EMAIL_FROM),
+        ("EMAIL_TO", EMAIL_TO),
+    ]:
+        if not var_value:
+            missing_vars.append(var_name)
+    if missing_vars:
+        logger.error(f"Missing environment variables for email: {', '.join(missing_vars)}")
+        return
+
     try:
-        msg = MIMEMultipart()
+        msg = EmailMessage()
         msg["From"] = EMAIL_FROM
         msg["To"] = EMAIL_TO
         msg["Subject"] = EMAIL_SUBJECT
-        msg.attach(MIMEText(message, "plain"))
+        msg.set_content(message)
+
+        logger.debug(f"Email From: {EMAIL_FROM}")
+        logger.debug(f"Email To: {EMAIL_TO}")
+        logger.debug(f"Email Subject: {EMAIL_SUBJECT}")
+        logger.debug(f"Email Content: {message}")
 
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.ehlo()
             server.starttls()  # Secure the connection
+            server.ehlo()
+            logger.info("Logging in to SMTP server...")
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            logger.info("Sending email...")
             server.send_message(msg)
 
         logger.info("Alert email sent successfully.")
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"SMTP Authentication Error: {e}")
+    except smtplib.SMTPRecipientsRefused as e:
+        logger.error(f"SMTP Recipients Refused: {e}")
+    except smtplib.SMTPException as e:
+        logger.error(f"SMTP Error: {e}")
     except Exception as e:
         logger.error(f"Failed to send alert email: {e}")
 
 
-def main(restart_services):
-
+def main(restart_services, send_only_email):
     logger.info("==================================================")
     logger.info("============== Starting URL checks ===============")
     logger.info("==================================================")
@@ -166,14 +191,18 @@ def main(restart_services):
     # Check if any URL checks failed
     if down_urls:
         logger.warning(">>> One or more URLs are down.")
+        message = f"One or more URLs are down:\n\n" + "\n".join(down_urls)
+
+        # Send email if the --email option is provided
+        if send_only_email:
+            send_email(message)
+
+        # Restart services if the --restart option is provided
         if restart_services:
             logger.warning("Restarting Apache server and Python apps as per the -r flag...")
             restart_apache()
             restart_python_apps()
-
-        # Send email notification
-        message = f"One or more URLs are down:\n\n" + "\n".join(down_urls)
-        send_email(message)
+            send_email(message)
     else:
         logger.info("======= All URLs are up and running correctly. =======")
 
@@ -181,8 +210,8 @@ def main(restart_services):
 if __name__ == "__main__":
     # Set up argument parser
     parser = argparse.ArgumentParser(
-        description="Monitor URLs and optionally restart services if URLs are down.",
-        epilog="Example usage: python app_monitor.py -r",
+        description="Monitor URLs and optionally restart services or send email if URLs are down.",
+        epilog="Example usage: python app_monitor.py -r OR python app_monitor.py -e",
     )
     parser.add_argument(
         "-r",
@@ -190,9 +219,15 @@ if __name__ == "__main__":
         action="store_true",
         help="Restart Apache and Python applications if URLs are down.",
     )
+    parser.add_argument(
+        "-e",
+        "--email",
+        action="store_true",
+        help="Send email notification if URLs are down without restarting services.",
+    )
 
     # Parse arguments
     args = parser.parse_args()
 
-    # Run the main function with the restart_services flag
-    main(restart_services=args.restart)
+    # Run the main function with the restart_services and send_only_email flags
+    main(restart_services=args.restart, send_only_email=args.email)
