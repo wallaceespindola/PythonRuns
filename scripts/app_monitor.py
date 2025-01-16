@@ -3,7 +3,8 @@ import logging
 import os
 import smtplib
 import subprocess
-from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 import requests
 from dotenv import load_dotenv
@@ -41,10 +42,10 @@ EXPECTED_STATUS = 200
 # Load environment variables from .env file
 load_dotenv()
 
-# Email configuration
+# Email configuration, from environment variables
 EMAIL_SUBJECT = "Alert: one or more URLs are down"
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 EMAIL_FROM = os.getenv("EMAIL_FROM")
@@ -89,7 +90,7 @@ def restart_apache():
         subprocess.run(["sudo", "systemctl", "restart", "apache2"], check=True)
         logger.info("Apache server restarted successfully.")
     except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to restart Apache server: {e}")
+        logger.error("Failed to restart Apache server: %s", e)
 
 
 def restart_python_apps():
@@ -103,9 +104,9 @@ def restart_python_apps():
             subprocess.run(["/bin/bash", start_script], check=True)
             logger.info("Python applications restarted successfully.")
         else:
-            logger.error(f"Failed to restart Python applications: {start_script} script not found.")
+            logger.error("Failed to restart Python applications: %s script not found.", start_script)
     except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to restart Python applications: {e}")
+        logger.error("Failed to restart Python applications: %s", e)
 
 
 def send_email(message):
@@ -128,21 +129,20 @@ def send_email(message):
         return
 
     try:
-        msg = EmailMessage()
+        msg = MIMEMultipart()
         msg["From"] = EMAIL_FROM
         msg["To"] = EMAIL_TO
         msg["Subject"] = EMAIL_SUBJECT
-        msg.set_content(message)
+        msg.attach(MIMEText(message, "plain", "utf-8"))
 
-        logger.debug(f"Email From: {EMAIL_FROM}")
-        logger.debug(f"Email To: {EMAIL_TO}")
-        logger.debug(f"Email Subject: {EMAIL_SUBJECT}")
-        logger.debug(f"Email Content: {message}")
+        logger.debug("Email From: %s", EMAIL_FROM)
+        logger.debug("Email To: %s", EMAIL_TO)
+        logger.debug("Email Subject:%s", EMAIL_SUBJECT)
+        logger.debug("Email Content:%s", message)
 
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.ehlo()
+            server.ehlo()  # Initiates ESMTP communication and gets the server capabilities.
             server.starttls()  # Secure the connection
-            server.ehlo()
             logger.info("Logging in to SMTP server...")
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             logger.info("Sending email...")
@@ -150,13 +150,13 @@ def send_email(message):
 
         logger.info("Alert email sent successfully.")
     except smtplib.SMTPAuthenticationError as e:
-        logger.error(f"SMTP Authentication Error: {e}")
+        logger.error("SMTP Authentication Error: %s", e)
     except smtplib.SMTPRecipientsRefused as e:
-        logger.error(f"SMTP Recipients Refused: {e}")
+        logger.error("SMTP Recipients Refused: %s", e)
     except smtplib.SMTPException as e:
-        logger.error(f"SMTP Error: {e}")
+        logger.error("SMTP Error: %s", e)
     except Exception as e:
-        logger.error(f"Failed to send alert email: {e}")
+        logger.exception("Failed to send alert email: %s", e)
 
 
 def main(restart_services, send_only_email):
@@ -190,14 +190,14 @@ def main(restart_services, send_only_email):
 
     # Check if any URL checks failed
     if down_urls:
-        logger.warning(">>> One or more URLs are down.")
         message = f"One or more URLs are down:\n\n" + "\n".join(down_urls)
+        logger.warning(message)
 
-        # Send email if the --email option is provided
+        # Send email if the -e or --email option is provided
         if send_only_email:
             send_email(message)
 
-        # Restart services if the --restart option is provided
+        # Restart services if the -r or --restart option is provided
         if restart_services:
             logger.warning("Restarting Apache server and Python apps as per the -r flag...")
             restart_apache()
