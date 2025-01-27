@@ -2,7 +2,7 @@
 
 # PythonRuns
 
-![Apache 2.0 License](https://img.shields.io/badge/License-Apache2.0-orange.svg)]
+![Apache 2.0 License](https://img.shields.io/badge/License-Apache2.0-orange)
 ![Python](https://img.shields.io/badge/Built_with-Python-blue)
 ![Pytest](https://img.shields.io/badge/Powered_by-Pytest-green)
 
