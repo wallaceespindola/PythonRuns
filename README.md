@@ -49,7 +49,7 @@ python -m unittest discover -s tests
 - [split_script.py](sources%2Fsplit_script.py): splits a text input file (like a log) into a given number of chunks.
 - [fake_data.py](sources%2Ffake_data.py): creates fake test data using Faker.
 - [qrcode.py](sources%2Fqrcode.py): creates a QR-Code from your data.
-- [fines_ibama_brazil.py](sources%2Ffines_ibama_brazil.py): Environmental fines research in Brazil government site.
+- [fines_ibama_brazil.py](sources%2Ffines_ibama_brazil.py): Environmental fines research in Brazil's government site.
 
 ## Author
 
