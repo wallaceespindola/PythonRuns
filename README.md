@@ -51,7 +51,7 @@ python -m unittest discover -s tests
 - [qrcode.py](sources%2Fqrcode.py): creates a QR-Code from your data.
 - [fines_ibama_brazil.py](sources%2Ffines_ibama_brazil.py): Environmental fines research in Brazil's government site.
 - [app_logging.py](sources/app_logging.py): the basics of logging in Python.
-- 
+
 ## Author
 
 - Wallace Espindola, Sr. Software Engineer / Java & Python Dev
