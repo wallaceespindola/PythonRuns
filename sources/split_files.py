@@ -44,7 +44,9 @@ def split_file(file_path, num_chunks) -> None:
 
             # Log the output file name
             # format to 2 decimal digits
-            logging.info(f"Split file created: {output_file_name}: {(os.path.getsize(output_file_name)/1024/1024):.2f} MB")
+            logging.info(
+                f"Split file created: {output_file_name}: {(os.path.getsize(output_file_name)/1024/1024):.2f} MB"
+            )
 
     logging.info(f"Finished splitting file: {file_path}")
     logging.info(f"Logs available at: {log_file}")
@@ -58,6 +60,6 @@ parser.add_argument("num_chunks", type=int, help="Number of chunks to split the 
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    #split_file("/home/user/sessions/session_1.json", 5)
-    #split_file("/home/user/logs/log_2024-09-25.log", 7)
+    # split_file("/home/user/sessions/session_1.json", 5)
+    # split_file("/home/user/logs/log_2024-09-25.log", 7)
     split_file(args.file_path, args.num_chunks)

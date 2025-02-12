@@ -18,7 +18,7 @@ cd ~/ibm-web && nohup flask run --host=0.0.0.0 -p 5000 > ibm_web_nohup.out 2>&1 
 #cd ~/qjump-api && nohup python3 app.py > qjump_api_nohup.out 2>&1 &
 cd ~/qjump-api && nohup flask run --host=0.0.0.0 -p 7000 > qjump_api_nohup.out 2>&1 & # findforme.bc/api
 # Option that also works: python3 /var/www/qjump_api/app.py ==> run on http://195.31.150.176:7000/
-#cd ~/qjump-api && nohup python3 app.py > qjump_api_nohup.out 2>&1 & 
+#cd ~/qjump-api && nohup python3 app.py > qjump_api_nohup.out 2>&1 &
 
 
 cd ~/findma && nohup flask run --host=0.0.0.0 -p 9000 > findma_nohup.out 2>&1 &
