@@ -1,8 +1,3 @@
-import tkinter as tk
-from tkinter import messagebox
-
-import psycopg2
-
 """
 Instructions:
 
@@ -30,6 +25,11 @@ CREATE DATABASE testdb;
 CREATE USER testuser WITH PASSWORD 'password';
 GRANT ALL PRIVILEGES ON DATABASE testdb TO testuser;
 """
+
+import tkinter as tk
+from tkinter import messagebox
+
+import psycopg2
 
 # Database connection settings
 DB_NAME = "testdb"

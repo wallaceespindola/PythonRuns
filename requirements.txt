@@ -16,6 +16,7 @@ pip-check==2.8.1
 pre-commit==3.7.1
 progress==1.6
 psutil==6.0.0
+pytest==8.3.4
 python-dotenv==1.0.1
 qrcode==7.4.2
 rembg==2.0.57
