@@ -1,7 +1,6 @@
 import ast
-import os
-
 import importlib.metadata
+import os
 
 
 def get_installed_packages() -> set:
@@ -37,6 +36,7 @@ def get_imported_modules(project_path) -> set:
                     print(f"Skipping {file_path} due to syntax error.")
 
     return imported_modules
+
 
 def analyze_dependencies(project_path) -> tuple[set, set, set]:
     installed_packages = get_installed_packages()
