@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pythonruns"
+version = "0.1.0"
+description = "Python tests and proofs of concept"
+authors = [
+    { name = "Wallace Espindola", email = "wallace.espindola@gmail.com" }
+]
+license = { text = "Apache-2.0" }
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.setuptools]
+packages = ["sources", "sources.database", "output", "resources", "scripts", "tests"]
+
+[project.urls]
+Homepage = "https://github.com/wallaceespindola"
+Repository = "https://github.com/wallaceespindola/PythonRuns"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra --strict-markers"
+testpaths = ["tests"]
+log_cli = true
+
+[tool.pre-commit]
+hook-config = { python = "python3" }
+
+[tool.setuptools.package-data]
+sources = ["*.txt", "*.cfg", "*.ini", "*.json", "*.csv", "*.pkl"]
+database = ["*.json"]
+output = ["*.csv", "*.docx"]
+resources = ["*.jpeg", "*.pdf"]
+scripts = ["*.sh", "*.py"]
+tests = ["*.py"]
+
+[tool.pip]
+requirements-file = "requirements.txt"
