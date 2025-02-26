@@ -38,7 +38,7 @@ repos:
       - id: no-commit-to-branch # Prevents committing to specified branches (e.g.: main, master)
         args: ["--branch", "master"]
       - id: requirements-txt-fixer # Ensures requirements.txt files are formatted correctly
-        files: "pip_requirements.txt|pip_dev_requirements.txt"
+        files: "requirements.txt"
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.35.1
