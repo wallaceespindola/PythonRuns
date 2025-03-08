@@ -4,8 +4,16 @@ echo ""
 echo ">>> Starting full system cleanup..."
 
 echo ""
+echo "Cleanup started at: $(date '+%Y-%m-%d %H:%M:%S')"
+
+
+echo ""
 echo ">>> Displaying current disk usage before cleanup..."
 df -h
+
+echo ""
+echo ">>> Displaying top big files on disk..."
+sudo find / -type f -exec du -h {} + | sort -rh | head -n 20
 
 echo ""
 echo ">>> Cleaning journal logs (keeping logs from the last 2 days)..."
@@ -109,13 +117,16 @@ echo ">>> Removing mongodb journal logs..."
 rm -rf /var/lib/mongodb/journal/*
 
 echo ""
-echo ">>> Displaying current disk usage after cleanup..."
+echo ">>> Displaying current disk usage..."
 df -h
 
-# Display the top big files after cleanup
+echo ""
+echo ">>> Displaying big folders..."
+du -ah / | sort -rh | head -20
+
 echo ""
 echo ">>> Displaying top big files on disk..."
-sudo find / -type f -exec du -h {} + | sort -rh | head -n 25
+sudo find / -type f -exec du -h {} + | sort -rh | head -n 20
 
 echo ""
 echo ">>> System cleanup complete."

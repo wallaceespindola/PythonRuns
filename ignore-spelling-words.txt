@@ -1,5 +1,5 @@
-admis
-jus
-classe
-te
-Controle
+POIN
+assertIn
+assertNotIn
+pEvent
+doubleClick
