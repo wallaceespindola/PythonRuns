@@ -3,3 +3,4 @@ assertIn
 assertNotIn
 pEvent
 doubleClick
+Controle

@@ -81,7 +81,7 @@ repos:
       - id: codespell # Spell checking - checks for common misspellings in text files
         name: codespell
         description: Checks for common misspellings in text files.
-        entry: codespell --skip="*.js,*.html,*.css,*.svg,*.ipynb,*.csv" --ignore-words ignore-spelling-words.txt
+        entry: codespell --skip="*.js,*.html,*.css,*.svg,*.ipynb,*.csv,*TRF*.py,*TJMG*.py,*love*.py" --ignore-words ignore-spelling-words.txt
         language: python
         types: [text]
 
