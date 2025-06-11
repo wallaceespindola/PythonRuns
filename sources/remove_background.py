@@ -49,4 +49,3 @@ if __name__ == "__main__":
     print("-----------------------------")
     remove_bg_numpy(input_path, f"{output_path}{file_name}_3.png")
     print("-----------------------------")
-

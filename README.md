@@ -52,9 +52,23 @@ python -m unittest discover -s tests
 - [fines_ibama_brazil.py](sources%2Ffines_ibama_brazil.py): Environmental fines research in Brazil's government site.
 - [app_logging.py](sources/app_logging.py): the basics of logging in Python.
 
+
+## 📝 Latest Articles, Publications and Tech-Talks
+
+- **[[Code & Coffee - Substack] Java turns 30: An Innovation Journey Through Time and Technology](https://wallaceespindola.substack.com/p/java-turns-30-an-innovation-journey)** - What 30 years of Java can teach us about building tech that lasts.
+  A timeline on what happened to **Java** from May 23rd 1995, when **Sun Microsystems** introduced Java 1.0 to the world, until modern days that made Java essentially great.
+- **[[Dev Community] FastAPI Unleashed: Building Modern and High-Performance APIs](https://dev.to/wallaceespindola/fastapi-your-fast-and-modern-framework-for-apis-3mmo)** - Demostranting FastAPI, a web framework designed for building APIs quickly and efficiently. Python based natively async, it takes advantage of non-blocking I/O to handle high loads, with extra features such as embedded data validation with Pydantic and auto-documentation with Swagger/Redoc.
+- **[[Dev Community] NoSQL Fighters Arena: The Battle of Data Titans](https://bit.ly/nosql-db-fighters-arena)** - Explore NoSQL databases reimagined as superheroes, each with unique powers and weaknesses, in a fun and visual battle-style format.
+- **[[LinkedIn Pulse] Java is turning 30 soon! Here's Why You Should Care, Even if You're Not a Tech Person](https://bit.ly/java-turning-30-soon-why-care)** - Java is a super famous programming language, and it is almost turning 30. But wait, what exactly is Java, and why should it matter to you?
+- **[[DZone] Top NoSQL Databases and When to Use Each](https://bit.ly/top-nosql-databases-and-use)** - A practical guide comparing NoSQL technologies like MongoDB, Cassandra, Redis, and more, highlighting their strengths, limitations, and best use cases.
+- **[[Dev Community] Test Python Code Like a Pro with Poetry, Tox, Nox and CI/CD](https://bit.ly/test-python-poetry-tox-nox-cicd)** - Improving your test coverage with multiple python versions through the use of of tools like Poetry, Pytest, Tox, Nox and CI/CD.
+- **[[Dev Community] Python Multithreading: Unlocking Concurrency for Better Performance](https://bit.ly/python-multithreading)** - The essentials of Python multithreading with practical examples and best practices to enhance application performance through concurrency. A must-read, to understand threading application performance in deep.
+- **[[DZone] Secure Password Hashing in Java: Best Practices and Code Examples](https://bit.ly/secure-password-hashing-in-java)** - Secure password hashing using modern algorithms like BCrypt, Argon2, and PBKDF2 with salting and computational intensity for better security, as alternative to SHA-512.
+- **More available on [my LinkedIn](https://www.linkedin.com/in/wallaceespindola)**.
+
 ## Author
 
-- Wallace Espindola, Sr. Software Engineer / Java & Python Dev
+- Wallace Espindola, Sr. Software Engineer / Solution Architect / Java & Python Dev
 - **LinkedIn:** [linkedin.com/in/wallaceespindola/](https://www.linkedin.com/in/wallaceespindola/)
 - **GitHub:** [github.com/wallaceespindola](https://github.com/wallaceespindola)
 - **E-mail:** [wallace.espindola@gmail.com](mailto:wallace.espindola@gmail.com)
@@ -70,4 +84,4 @@ python -m unittest discover -s tests
 
 - This project is released under the Apache 2.0 License.
 - See the [LICENSE](LICENSE) file for details.
-- Copyright © 2024 [Wallace Espindola](https://github.com/wallaceespindola/).
+- Copyright © 2025 [Wallace Espindola](https://github.com/wallaceespindola/).
