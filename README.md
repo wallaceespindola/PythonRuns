@@ -55,11 +55,19 @@ python -m unittest discover -s tests
 ## Author
 
 - Wallace Espindola, Sr. Software Engineer / Java & Python Dev
-- E-mail: wallace.espindola@gmail.com
-- LinkedIn: https://www.linkedin.com/in/wallaceespindola/
-- Website: https://wtechitsolutions.com/
+- **LinkedIn:** [linkedin.com/in/wallaceespindola/](https://www.linkedin.com/in/wallaceespindola/)
+- **GitHub:** [github.com/wallaceespindola](https://github.com/wallaceespindola)
+- **E-mail:** [wallace.espindola@gmail.com](mailto:wallace.espindola@gmail.com)
+- **Twitter:** [@wsespindola](https://twitter.com/wsespindola)
+- **Gravatar:** [gravatar.com/wallacese](https://gravatar.com/wallacese)
+- **Dev Community:** [dev.to/wallaceespindola](https://dev.to/wallaceespindola)
+- **DZone Articles:** [DZone Profile](https://dzone.com/users/1254611/wallacese.html)
+- **Pulse Articles:** [LinkedIn Articles](https://www.linkedin.com/in/wallaceespindola/recent-activity/articles/)
+- **Website:** [W-Tech IT Solutions](https://www.wtechitsolutions.com/)
+- **Presentation Slides:** [Speakerdeck](https://speakerdeck.com/wallacese)
 
 ## License
 
-- This project is released under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
+- This project is released under the Apache 2.0 License.
+- See the [LICENSE](LICENSE) file for details.
 - Copyright © 2024 [Wallace Espindola](https://github.com/wallaceespindola/).
