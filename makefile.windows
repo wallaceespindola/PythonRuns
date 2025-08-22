@@ -1,0 +1,242 @@
+<#  Makefile.ps1 — Windows task runner for Python projects
+    Mirrors the GNU Makefile targets with colors, start/done logs, and guards.
+
+    Examples:
+      .\Makefile.ps1
+      .\Makefile.ps1 install
+      .\Makefile.ps1 build
+      .\Makefile.ps1 twine-check
+#>
+
+[CmdletBinding()]
+param(
+  [Parameter(Position=0)]
+  [ValidateNotNullOrEmpty()]
+  [string]$Task = "help"
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+# -------- Configurable variables (env overrides supported) --------
+function Get-OrDefault($envName, $default) {
+  if ($env:$envName) { return $env:$envName } else { return $default }
+}
+
+$Python            = Get-OrDefault 'PYTHON'            'py -3'
+$Package           = Get-OrDefault 'PACKAGE'           'PythonRuns'
+$IndexUrl          = Get-OrDefault 'INDEX_URL'         'https://nexus.myrepo.net/repository/pypi-releases/simple'
+$ExtraIndexUrl     = Get-OrDefault 'EXTRA_INDEX_URL'   'https://pypi.org/simple'
+$RepositoryUpload  = Get-OrDefault 'REPOSITORY_UPLOAD' 'https://nexus.myrepo.net/repository/pypi-releases/'
+$RequirementsMain  = Get-OrDefault 'REQUIREMENTS_MAIN' 'requirements.txt'
+$RequirementsDev   = Get-OrDefault 'REQUIREMENTS_DEV'  'dev_requirements.txt'
+# Prefer module-invocation for pip/twine/build for better reliability on Windows:
+$PipCmd            = "$Python -m pip"
+
+# Pip flags (DRY)
+$PipFlags = @('--index-url', $IndexUrl, '--extra-index-url', $ExtraIndexUrl)
+
+# -------- Colors --------
+$Cyan  = "`e[1;36m"
+$Green = "`e[1;32m"
+$Reset = "`e[0m"
+
+# -------- Logging --------
+function Start-Log([string]$name) {
+  $script:sw = [System.Diagnostics.Stopwatch]::StartNew()
+  $ts = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+  Write-Host ""
+  Write-Host ("{0}[{1}] ▶ Starting {2}{3}" -f $Cyan, $ts, $name, $Reset)
+}
+function Done-Log([string]$name) {
+  if ($script:sw) { $script:sw.Stop() }
+  $elapsed = if ($script:sw) { [math]::Round($script:sw.Elapsed.TotalSeconds,2) } else { 0 }
+  Write-Host ("{0}✓ Done {1} in {2}s{3}" -f $Green, $name, $elapsed, $Reset)
+}
+
+# -------- Helpers / Guards --------
+function Ensure-File([string]$path) {
+  if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+    throw "Missing file: $path"
+  }
+}
+function Ensure-Requirements {
+  Ensure-File $RequirementsMain
+  Ensure-File $RequirementsDev
+}
+function Ensure-Dist {
+  if (-not (Test-Path -LiteralPath 'dist' -PathType Container)) {
+    throw "No 'dist/' directory. Run 'build' first."
+  }
+  $files = Get-ChildItem -LiteralPath 'dist' -File -ErrorAction SilentlyContinue
+  if (-not $files -or $files.Count -eq 0) {
+    throw "'dist/' is empty. Run 'build' first."
+  }
+  return $files
+}
+function Ensure-Command([string]$cmd, [string]$hint) {
+  if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
+    throw "$cmd not found. $hint"
+  }
+}
+
+# ---- Target implementations ----
+$Tasks = [ordered]@{
+
+  'config' = @{
+    Description = 'Configure pip indexes (Nexus + PyPI)';
+    Action = {
+      Start-Log 'config'
+      & $PipCmd config --user set global.index-url $IndexUrl
+      & $PipCmd config --user set global.extra-index-url $ExtraIndexUrl
+      & $PipCmd config --user list
+      Done-Log 'config'
+    }
+  }
+
+  'clean' = @{
+    Description = 'Remove build/test artifacts';
+    Action = {
+      Start-Log 'clean'
+      foreach ($p in 'dist','build','.pytest_cache','.mypy_cache','htmlcov') {
+        if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Recurse -Force -ErrorAction SilentlyContinue }
+      }
+      foreach ($f in '.coverage','report.html') {
+        if (Test-Path -LiteralPath $f -PathType Leaf) { Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue }
+      }
+      Get-ChildItem -Recurse -Directory -Filter '__pycache__' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+      Get-ChildItem -Recurse -Directory -Filter '*.egg-info' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+      Done-Log 'clean'
+    }
+  }
+
+  'install' = @{
+    Description = 'Install project in editable mode with dev extras';
+    Action = {
+      Start-Log 'install'
+      & $PipCmd install @PipFlags -e '.[DEV]'
+      Done-Log 'install'
+    }
+  }
+
+  'update' = @{
+    Description = 'Update dependencies from requirements files';
+    Action = {
+      Start-Log 'update'
+      Ensure-Requirements
+      & $PipCmd install @PipFlags -r $RequirementsDev -r $RequirementsMain
+      Done-Log 'update'
+    }
+  }
+
+  'test' = @{
+    Description = 'Run tests (verbose)';
+    Action = {
+      Start-Log 'test'
+      & $Python -m pytest --verbose
+      Done-Log 'test'
+    }
+  }
+
+  'test-coverage' = @{
+    Description = 'Run tests with coverage; HTML at ./report.html';
+    Action = {
+      Start-Log 'test-coverage'
+      & $Python -m pytest --cov=$Package --verbose --html=report.html --self-contained-html
+      Done-Log 'test-coverage'
+    }
+  }
+
+  'run' = @{
+    Description = 'Run the package as a module';
+    Action = {
+      Start-Log 'run'
+      & $Python -m $Package
+      Done-Log 'run'
+    }
+  }
+
+  'pre-commit' = @{
+    Description = 'Run all pre-commit hooks';
+    Action = {
+      Start-Log 'pre-commit'
+      if (Get-Command 'pre-commit' -ErrorAction SilentlyContinue) {
+        & pre-commit run --all-files
+      } else {
+        # Fallback to module invocation if CLI shim not in PATH
+        & $Python -m pre_commit run --all-files
+      }
+      Done-Log 'pre-commit'
+    }
+  }
+
+  'build' = @{
+    Description = 'Build sdist and wheel into ./dist';
+    Action = {
+      Start-Log 'build'
+      # Ensure 'build' module available
+      & $Python -c 'import build' 2>$null
+      & $Python -m build
+      Done-Log 'build'
+    }
+  }
+
+  'twine-check' = @{
+    Description = 'Validate built artifacts (sdist/wheel) with Twine';
+    Action = {
+      Start-Log 'twine-check'
+      $files = Ensure-Dist
+      & $Python -m twine check ($files.FullName)
+      Done-Log 'twine-check'
+    }
+  }
+
+  'deploy' = @{
+    Description = 'Upload ./dist to Nexus (uses TWINE_* env vars)';
+    Action = {
+      Start-Log 'deploy'
+      $null = Ensure-Dist
+      & $Python -m twine upload --repository-url $RepositoryUpload dist/*
+      Done-Log 'deploy'
+    }
+  }
+
+  'version' = @{
+    Description = 'Show package version';
+    Action = {
+      Start-Log 'version'
+      & $Python -m $Package -v
+      Done-Log 'version'
+    }
+  }
+
+  'help' = @{
+    Description = 'List available commands (default)';
+    Action = {
+      Write-Host "`nAvailable commands:`n"
+      $Tasks.GetEnumerator() | ForEach-Object {
+        # Left-pad names to 16 chars for alignment
+        $name = $_.Key.PadRight(16)
+        Write-Host ("  {0} {1}" -f $name, $_.Value.Description)
+      }
+    }
+  }
+
+  'list' = @{
+    Description = 'Alias for help';
+    Action = { & $Tasks['help'].Action.Invoke() }
+  }
+}
+
+# -------- Dispatch --------
+try {
+  $key = $Task.ToLower()
+  if (-not $Tasks.Contains($key)) {
+    throw "Unknown task '$Task'. Run '.\Makefile.ps1 help' to list tasks."
+  }
+  & $Tasks[$key].Action.Invoke()
+}
+catch {
+  Write-Error $_.Exception.Message
+  exit 1
+}
