@@ -1,27 +1,40 @@
 #!/bin/bash
+set -e
 
-# Set variables
-REPO_DIR="/home/user/git/my-runs"
-COMMIT_MESSAGE="Updated documentation on $(date '+%Y-%m-%d')"
+# Minimal env for cron
+export HOME="/home/aiyrh"
+export PATH="/usr/local/bin:/usr/bin:/bin"
 
-# Navigate to the repository directory
-cd "$REPO_DIR" || {
-    echo "Repository directory not found!"
-    exit 1
-}
+# Choose repo by weekday (1=Mon ... 7=Sun)
+case "$(date +%u)" in
+  1) REPO="$HOME/git/fast-api-test" ;;                      # Mon
+  2) REPO="$HOME/git/PythonRuns" ;;                         # Tue
+  3) REPO="$HOME/git/flashcards-app" ;;                     # Wed
+  4) REPO="$HOME/git/investment-portfolio-python" ;;        # Thu
+  5) REPO="$HOME/git/workflow-kafka-process-file-outpup" ;; # Fri
+  6) REPO="$HOME/git/password-hashing-security-java" ;;     # Sat
+  7) REPO="$HOME/git/python-multithreading" ;;              # Sun
+  *) echo "Unknown weekday"; exit 2 ;;
+esac
 
-# Ensure we're on the correct branch (e.g., main)
-git checkout main
+cd "$REPO" || { echo "Repo not found: $REPO"; exit 1; }
+[ -d .git ] || { echo "Not a git repo: $REPO"; exit 1; }
 
-# Add all changes
-git add .
+# Apply identity ONLY for the selected repo (change path if you want a different one)
+if [[ "$REPO" == "$HOME/git/fast-api-test" ]]; then
+  git config --local user.name  "Wallace Espindola"
+  git config --local user.email "wallace.espindola@gmail.com"
+fi
 
-# Force commit changes without checking for modifications
-git commit --allow-empty -m "$COMMIT_MESSAGE"
+# Use currently checked-out branch
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+MSG="Small fix"
 
-# Push to GitHub
-git push origin main
+git fetch --all --prune
+git pull --rebase --autostash
+git add -A
+git commit --allow-empty -m "$MSG"
+git push origin "$BRANCH"
 
-echo "Changes committed and pushed successfully on $(date)."
+echo "[$(date)] Commit and push in $REPO on branch $BRANCH."
 
-# Now add to crontab for 8AM commit: 0 8 * * * /bin/bash ~/scripts/daily_git_commit.sh >> ~/scripts/daily_git_commit.log 2>&1
