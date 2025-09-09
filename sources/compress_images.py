@@ -73,4 +73,4 @@ if __name__ == "__main__":
     # args = parser.parse_args()
     #
     # process_images(args.folder, args.max_size_kb)
-    process_images("/home/aiyrh/Pictures/Webcam/", 75)
+    process_images("/home/my_user/Pictures/Webcam/", 75)

@@ -2,7 +2,7 @@
 set -e
 
 # Minimal env for cron
-export HOME="/home/aiyrh"
+export HOME="/home/my_user"
 export PATH="/usr/local/bin:/usr/bin:/bin"
 
 # Choose repo by weekday (1=Mon ... 7=Sun)
