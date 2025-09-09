@@ -12,8 +12,8 @@ case "$(date +%u)" in
   3) REPO="$HOME/git/flashcards-app" ;;                     # Wed
   4) REPO="$HOME/git/investment-portfolio-python" ;;        # Thu
   5) REPO="$HOME/git/workflow-kafka-process-file-output" ;; # Fri
-  6) REPO="$HOME/git/password-hashing-security-java" ;;     # Sat
-  7) REPO="$HOME/git/python-multithreading" ;;              # Sun
+  6) REPO="$HOME/git/spring-kafka-batch-demo" ;;            # Sat
+  7) REPO="$HOME/git/python-flask-app" ;;                   # Sun
   *) echo "Unknown weekday"; exit 2 ;;
 esac
 

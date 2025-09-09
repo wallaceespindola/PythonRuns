@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set variables
-REPO_DIR="/home/user/git/my-runs"
+REPO_DIR="/home/my_user/git/my-runs"
 COMMIT_MESSAGE="Updated documentation on $(date '+%Y-%m-%d')"
 
 # Navigate to the repository directory

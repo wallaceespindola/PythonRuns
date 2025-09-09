@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set variables
-REPO_DIR="/home/aiyrh/git/fast-api-test"
+REPO_DIR="/home/my_user/git/fast-api-test"
 #COMMIT_MESSAGE="Small fixes on $(date '+%Y-%m-%d')"
 COMMIT_MESSAGE="Small fix"
 
