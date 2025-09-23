@@ -76,9 +76,11 @@ python -m unittest discover -s tests
 - **Gravatar:** [gravatar.com/wallacese](https://gravatar.com/wallacese)
 - **Dev Community:** [dev.to/wallaceespindola](https://dev.to/wallaceespindola)
 - **DZone Articles:** [DZone Profile](https://dzone.com/users/1254611/wallacese.html)
-- **Pulse Articles:** [LinkedIn Articles](https://www.linkedin.com/in/wallaceespindola/recent-activity/articles/)
+- **Pulse Linkedin:** [LinkedIn Articles](https://www.linkedin.com/in/wallaceespindola/recent-activity/articles/)
 - **Website:** [W-Tech IT Solutions](https://www.wtechitsolutions.com/)
-- **Presentation Slides:** [Speakerdeck](https://speakerdeck.com/wallacese)
+- **Substack:** [wallaceespindola.substack.com](https://wallaceespindola.substack.com/)
+- **Medium:** [medium.com/@wallaceespindola](https://medium.com/@wallaceespindola)
+- **Slides:** [Speakerdeck](https://speakerdeck.com/wallacese)
 
 ## License
 
