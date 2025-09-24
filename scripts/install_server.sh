@@ -9,12 +9,31 @@
 #
 # Author: Wallace Espindola (Skipy Team)
 # Date: September 2025
-# Version: 1.0
+# Version: 2.0
 #
 # URLs:
 # - FastAPI Backend: https://api.skipy.com.br
 # - React Client App: https://client.skipy.com.br
 # - React Manager App: https://manager.skipy.com.br
+#
+# REQUIREMENTS:
+# - Ubuntu 20.04+ VPS with root access
+# - Skipy wheel file: skipy_backend-0.1.0-py3-none-any.whl
+# - DNS records configured for all domains (optional for SSL)
+#
+# PREPARATION:
+# 1. Build the wheel file: python setup.py bdist_wheel
+# 2. Copy wheel file to VPS: scp dist/skipy_backend-0.1.0-py3-none-any.whl root@YOUR_IP:/tmp/
+# 3. Run this script: chmod +x install_server.sh && sudo ./install_server.sh
+#
+# FEATURES:
+# - Complete Skipy ecosystem setup (API, Client, Manager domains)
+# - Python 3.11 + MongoDB 7.0 + Nginx with SSL
+# - Oh My Zsh with Jonathan theme
+# - Production-ready configuration with monitoring and backups
+# - Multi-domain SSL certificate support
+# - Systemd service with auto-restart
+# - Log rotation and security hardening
 #
 # IMPORTANT: Run this script as root or with sudo privileges
 # Usage: chmod +x install_server.sh && sudo ./install_server.sh
@@ -40,15 +59,46 @@ APP_NAME="skipy"
 APP_USER="skipy"
 APP_GROUP="skipy"
 APP_HOME="/home/$APP_USER"
-APP_DIR="$APP_HOME/fast-api-skipy"
+APP_DIR="/opt/skipy-backend"
+
+# Software versions
 PYTHON_VERSION="3.11"
 NODE_VERSION="18"
 MONGODB_VERSION="7.0"
 
-# Default configuration - can be overridden by user input
+# Skipy application configuration
+WHEEL_FILE_NAME="skipy_backend-0.1.0-py3-none-any.whl"
+WHEEL_FILE_PATH="/tmp/$WHEEL_FILE_NAME"
+
+# Default server configuration - can be overridden by user input
 DEFAULT_DOMAIN="api.skipy.com.br"
 DEFAULT_EMAIL="info@skipy.io"
 DEFAULT_SERVER_IP="72.60.141.252"
+
+# Skipy ecosystem domains
+SKIPY_DOMAINS=(
+    "skipy.com.br"
+    "www.skipy.com.br"
+    "api.skipy.com.br"
+    "client.skipy.com.br"
+    "manager.skipy.com.br"
+)
+
+# Web directories for React apps
+CLIENT_WEB_DIR="/var/www/client"
+MANAGER_WEB_DIR="/var/www/manager"
+
+# Nginx configuration files
+NGINX_SITES_AVAILABLE="/etc/nginx/sites-available"
+NGINX_SITES_ENABLED="/etc/nginx/sites-enabled"
+
+# Database configuration
+DB_NAME="skipy_db"
+DB_USER="skipy_user"
+
+# SSL/TLS configuration
+CERTBOT_EMAIL=""
+SSL_INSTALLED=false
 
 # Runtime variables (populated during execution)
 DOMAIN=""
@@ -851,22 +901,44 @@ install_nginx() {
     log "Removing default Nginx configuration..."
     rm -f /etc/nginx/sites-enabled/default
 
-    # Create Nginx configuration for Skipy
-    log "Creating Nginx configuration for Skipy..."
-    cat > /etc/nginx/sites-available/$APP_NAME << EOF
-# Skipy FastAPI Backend Configuration
-# Rate limiting
-limit_req_zone \$binary_remote_addr zone=api:10m rate=10r/s;
-limit_req_zone \$binary_remote_addr zone=auth:10m rate=5r/s;
+    # Create Nginx configurations for all Skipy domains
+    log "Creating Nginx configurations for Skipy ecosystem..."
 
-# Upstream for load balancing (if needed in future)
-upstream skipy_backend {
-    server 127.0.0.1:8000;
-}
-
+    # (a) API - FastAPI backend (port 8000)
+    log "Creating API configuration (api.skipy.com.br)..."
+    cat > /etc/nginx/sites-available/api.skipy.com.br << 'EOF'
 server {
-    listen 80;
-    server_name $DOMAIN;
+    server_name api.skipy.com.br;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+    }
+
+    # WebSocket support for API
+    location /ws {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # File upload size limit
+    client_max_body_size 50M;
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -874,99 +946,162 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
     add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
-
-    # File upload size limit
-    client_max_body_size 50M;
-
-    # Rate limiting
-    location /api/v1/auth/ {
-        limit_req zone=auth burst=10 nodelay;
-        proxy_pass http://skipy_backend;
-        include /etc/nginx/proxy_params;
-    }
-
-    location /api/ {
-        limit_req zone=api burst=20 nodelay;
-        proxy_pass http://skipy_backend;
-        include /etc/nginx/proxy_params;
-    }
-
-    # WebSocket support
-    location /ws {
-        proxy_pass http://skipy_backend;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-
-    # Static files
-    location /static/ {
-        alias $APP_DIR/app/static/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # File uploads
-    location /uploads/ {
-        alias $APP_DIR/uploads/;
-        expires 7d;
-    }
-
-    # API documentation (optional - remove in production)
-    location /docs {
-        proxy_pass http://skipy_backend;
-        include /etc/nginx/proxy_params;
-    }
-
-    location /redoc {
-        proxy_pass http://skipy_backend;
-        include /etc/nginx/proxy_params;
-    }
-
-    # Health check
-    location /health {
-        proxy_pass http://skipy_backend;
-        include /etc/nginx/proxy_params;
-    }
-
-    # All other requests to FastAPI
-    location / {
-        limit_req zone=api burst=20 nodelay;
-        proxy_pass http://skipy_backend;
-        include /etc/nginx/proxy_params;
-    }
 }
 EOF
 
-    # Create proxy_params if it doesn't exist
-    cat > /etc/nginx/proxy_params << EOF
-proxy_set_header Host \$host;
-proxy_set_header X-Real-IP \$remote_addr;
-proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-proxy_set_header X-Forwarded-Proto \$scheme;
-proxy_connect_timeout 60s;
-proxy_send_timeout 60s;
-proxy_read_timeout 60s;
-proxy_buffering off;
+    # (b) Client - React app (served from build folder)
+    log "Creating Client configuration (client.skipy.com.br)..."
+    cat > /etc/nginx/sites-available/client.skipy.com.br << 'EOF'
+server {
+    server_name client.skipy.com.br;
+    root /var/www/client;
+
+    index index.html;
+
+    location / {
+        try_files $uri /index.html;
+    }
+
+    # Static assets caching
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+}
 EOF
 
-    # Enable site
-    ln -sf /etc/nginx/sites-available/$APP_NAME /etc/nginx/sites-enabled/
+    # (c) Manager - React app
+    log "Creating Manager configuration (manager.skipy.com.br)..."
+    cat > /etc/nginx/sites-available/manager.skipy.com.br << 'EOF'
+server {
+    server_name manager.skipy.com.br;
+    root /var/www/manager;
+
+    index index.html;
+
+    location / {
+        try_files $uri /index.html;
+    }
+
+    # Static assets caching
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+}
+EOF
+
+    # (d) Default root (skipy.com.br)
+    log "Creating main domain configuration (skipy.com.br)..."
+    cat > /etc/nginx/sites-available/skipy.com.br << 'EOF'
+server {
+    server_name skipy.com.br www.skipy.com.br;
+
+    location / {
+        return 200 'Hello from Skipy 🚀';
+        add_header Content-Type text/plain;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+}
+EOF
+
+    # Create directories for React apps
+    log "Creating directories for React applications..."
+    mkdir -p /var/www/client
+    mkdir -p /var/www/manager
+    chown -R www-data:www-data /var/www/client /var/www/manager
+
+    # Create placeholder index.html files for React apps
+    log "Creating placeholder files for React applications..."
+    cat > /var/www/client/index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skipy Client - Coming Soon</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; }
+        p { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Skipy Client App</h1>
+        <p>The Skipy client application will be deployed here soon.</p>
+        <p>This is a placeholder page.</p>
+    </div>
+</body>
+</html>
+EOF
+
+    cat > /var/www/manager/index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skipy Manager - Coming Soon</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; }
+        p { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Skipy Manager App</h1>
+        <p>The Skipy manager application will be deployed here soon.</p>
+        <p>This is a placeholder page.</p>
+    </div>
+</body>
+</html>
+EOF
+
+    # Enable all site configurations
+    log "Enabling Skipy site configurations..."
+    ln -sf /etc/nginx/sites-available/api.skipy.com.br /etc/nginx/sites-enabled/
+    ln -sf /etc/nginx/sites-available/client.skipy.com.br /etc/nginx/sites-enabled/
+    ln -sf /etc/nginx/sites-available/manager.skipy.com.br /etc/nginx/sites-enabled/
+    ln -sf /etc/nginx/sites-available/skipy.com.br /etc/nginx/sites-enabled/
 
     # Test Nginx configuration
+    log "Testing Nginx configuration..."
     nginx -t
 
     # Start and enable Nginx
+    log "Starting and enabling Nginx service..."
     systemctl start nginx
     systemctl enable nginx
-    log "Nginx installed and configured successfully"
+
+    log "Nginx installed and configured successfully for all Skipy domains"
+    log "Configured domains:"
+    log "  - api.skipy.com.br (FastAPI backend)"
+    log "  - client.skipy.com.br (React client app)"
+    log "  - manager.skipy.com.br (React manager app)"
+    log "  - skipy.com.br & www.skipy.com.br (main domain)"
     task_complete "Nginx installation and configuration"
 }
 
@@ -981,37 +1116,49 @@ install_ssl() {
         return 0
     fi
 
-    step "Installing SSL Certificate for $DOMAIN"
+    step "Installing SSL Certificates for Skipy Ecosystem"
     log "Using email: $EMAIL"
+    log "Installing SSL certificates for all Skipy domains..."
 
-    # Check domain resolution first
-    log "Checking domain resolution for $DOMAIN..."
-    DOMAIN_IP=$(dig +short $DOMAIN 2>/dev/null | head -n1)
+    # Define all Skipy domains
+    SKIPY_DOMAINS=(
+        "skipy.com.br"
+        "www.skipy.com.br"
+        "api.skipy.com.br"
+        "client.skipy.com.br"
+        "manager.skipy.com.br"
+    )
+
+    # Check domain resolution for main domains
+    log "Checking domain resolution for Skipy domains..."
     SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || echo "$DEFAULT_SERVER_IP")
 
-    if [[ -z "$DOMAIN_IP" ]]; then
-        warn "Domain $DOMAIN does not resolve to any IP address (NXDOMAIN)"
-        warn "DNS Configuration Required:"
-        warn "1. Create an A record for $DOMAIN pointing to: $SERVER_IP"
-        warn "2. Wait for DNS propagation (5-60 minutes)"
-        warn "3. Then run SSL installation manually:"
-        warn "   sudo certbot --nginx -d $DOMAIN --email $EMAIL"
+    DOMAINS_RESOLVED=true
+    for domain in "${SKIPY_DOMAINS[@]}"; do
+        DOMAIN_IP=$(dig +short "$domain" 2>/dev/null | head -n1)
+        if [[ -z "$DOMAIN_IP" ]]; then
+            warn "Domain $domain does not resolve to any IP address"
+            DOMAINS_RESOLVED=false
+        elif [[ -n "$SERVER_IP" && "$DOMAIN_IP" != "$SERVER_IP" ]]; then
+            warn "Domain $domain resolves to $DOMAIN_IP but server IP is $SERVER_IP"
+            DOMAINS_RESOLVED=false
+        else
+            log "✓ $domain resolves correctly to $SERVER_IP"
+        fi
+    done
+
+    if [[ "$DOMAINS_RESOLVED" == "false" ]]; then
+        warn "DNS Configuration Issues Detected:"
+        warn "Please configure DNS records for all Skipy domains:"
+        for domain in "${SKIPY_DOMAINS[@]}"; do
+            warn "  - Create A record for $domain pointing to: $SERVER_IP"
+        done
         warn ""
-        warn "Continuing installation without SSL certificate..."
-        warn "Your API will be available at: http://$DOMAIN"
-        return 1
-    elif [[ -n "$SERVER_IP" && "$DOMAIN_IP" != "$SERVER_IP" ]]; then
-        warn "Domain $DOMAIN resolves to $DOMAIN_IP but server IP is $SERVER_IP"
-        warn "DNS Configuration Issue:"
-        warn "1. Update A record for $DOMAIN to point to: $SERVER_IP"
-        warn "2. Wait for DNS propagation (5-60 minutes)"
-        warn "3. Then run SSL installation manually:"
-        warn "   sudo certbot --nginx -d $DOMAIN --email $EMAIL"
+        warn "After DNS configuration, run SSL installation manually:"
+        warn "  sudo certbot --nginx -d skipy.com.br -d www.skipy.com.br -d api.skipy.com.br -d client.skipy.com.br -d manager.skipy.com.br --email $EMAIL"
         warn ""
-        warn "Continuing installation without SSL certificate..."
+        warn "Continuing installation without SSL certificates..."
         return 1
-    else
-        log "Domain resolution looks correct ($DOMAIN -> $SERVER_IP)"
     fi
 
     # Fix Python cryptography issues first
@@ -1095,21 +1242,33 @@ EOF
     if [[ "$CERTBOT_INSTALLED" == "false" ]]; then
         warn "Could not install Certbot using any method."
         warn "You can manually install SSL later using: sudo snap install --classic certbot"
+        warn "Then run: sudo certbot --nginx -d skipy.com.br -d www.skipy.com.br -d api.skipy.com.br -d client.skipy.com.br -d manager.skipy.com.br --email $EMAIL"
         return 1
     fi
 
-    # Try to obtain SSL certificate
-    log "Obtaining SSL certificate from Let's Encrypt..."
+    # Try to obtain SSL certificates for all domains
+    log "Obtaining SSL certificates for all Skipy domains..."
+
+    # Build domain arguments for certbot
+    DOMAIN_ARGS=""
+    for domain in "${SKIPY_DOMAINS[@]}"; do
+        DOMAIN_ARGS="$DOMAIN_ARGS -d $domain"
+    done
 
     # Method 1: Try nginx plugin first
-    if certbot --nginx -d $DOMAIN --non-interactive --agree-tos --email $EMAIL --redirect 2>/dev/null; then
-        log "SSL certificate obtained successfully with nginx plugin!"
+    log "Attempting SSL certificate installation with nginx plugin..."
+    if certbot --nginx $DOMAIN_ARGS --non-interactive --agree-tos --email $EMAIL --redirect 2>/dev/null; then
+        log "SSL certificates obtained successfully with nginx plugin!"
+        log "All Skipy domains now have SSL certificates:"
+        for domain in "${SKIPY_DOMAINS[@]}"; do
+            log "  ✓ https://$domain"
+        done
 
         # Test auto-renewal
         if certbot renew --dry-run 2>/dev/null; then
             log "Auto-renewal test passed"
         else
-            warn "Auto-renewal test failed, but certificate is installed"
+            warn "Auto-renewal test failed, but certificates are installed"
         fi
         return 0
     fi
@@ -1121,11 +1280,11 @@ EOF
     mkdir -p /var/www/html/.well-known/acme-challenge
     chown -R www-data:www-data /var/www/html/.well-known 2>/dev/null || true
 
-    # Create temporary nginx config for challenge
-    cat > /etc/nginx/sites-available/temp-ssl << EOF
+    # Create temporary nginx config for all domains
+    cat > /etc/nginx/sites-available/temp-ssl << 'EOF'
 server {
     listen 80;
-    server_name $DOMAIN;
+    server_name skipy.com.br www.skipy.com.br api.skipy.com.br client.skipy.com.br manager.skipy.com.br;
 
     location /.well-known/acme-challenge/ {
         root /var/www/html;
@@ -1133,45 +1292,62 @@ server {
     }
 
     location / {
-        return 200 'SSL Challenge Server - Skipy';
+        return 200 'SSL Challenge Server - Skipy Ecosystem';
         add_header Content-Type text/plain;
     }
 }
 EOF
 
-    # Enable temporary config
-    rm -f /etc/nginx/sites-enabled/$APP_NAME
+    # Disable all domain configs and enable temporary config
+    log "Temporarily reconfiguring Nginx for SSL challenge..."
+    rm -f /etc/nginx/sites-enabled/api.skipy.com.br
+    rm -f /etc/nginx/sites-enabled/client.skipy.com.br
+    rm -f /etc/nginx/sites-enabled/manager.skipy.com.br
+    rm -f /etc/nginx/sites-enabled/skipy.com.br
     ln -sf /etc/nginx/sites-available/temp-ssl /etc/nginx/sites-enabled/temp-ssl
     nginx -t && nginx -s reload 2>/dev/null
 
     # Try webroot method
-    if certbot certonly --webroot -w /var/www/html -d $DOMAIN --non-interactive --agree-tos --email $EMAIL 2>/dev/null; then
-        log "SSL certificate obtained using webroot method!"
+    if certbot certonly --webroot -w /var/www/html $DOMAIN_ARGS --non-interactive --agree-tos --email $EMAIL 2>/dev/null; then
+        log "SSL certificates obtained using webroot method!"
 
         # Remove temporary config
         rm -f /etc/nginx/sites-enabled/temp-ssl
 
-        # Update nginx config with SSL
-        update_nginx_ssl_config
+        # Re-enable all domain configs (they will be auto-updated by certbot)
+        ln -sf /etc/nginx/sites-available/api.skipy.com.br /etc/nginx/sites-enabled/
+        ln -sf /etc/nginx/sites-available/client.skipy.com.br /etc/nginx/sites-enabled/
+        ln -sf /etc/nginx/sites-available/manager.skipy.com.br /etc/nginx/sites-enabled/
+        ln -sf /etc/nginx/sites-available/skipy.com.br /etc/nginx/sites-enabled/
+
+        # Test and reload nginx
+        nginx -t && nginx -s reload
+
+        log "All Skipy domains now have SSL certificates:"
+        for domain in "${SKIPY_DOMAINS[@]}"; do
+            log "  ✓ https://$domain"
+        done
 
         # Test auto-renewal
         if certbot renew --dry-run 2>/dev/null; then
             log "Auto-renewal test passed"
         else
-            warn "Auto-renewal test failed, but certificate is installed"
+            warn "Auto-renewal test failed, but certificates are installed"
         fi
 
         return 0
     else
-        # Clean up temporary config
+        # Clean up temporary config and restore original configs
         rm -f /etc/nginx/sites-enabled/temp-ssl
-        # Restore original nginx config
-        ln -sf /etc/nginx/sites-available/$APP_NAME /etc/nginx/sites-enabled/$APP_NAME
+        ln -sf /etc/nginx/sites-available/api.skipy.com.br /etc/nginx/sites-enabled/
+        ln -sf /etc/nginx/sites-available/client.skipy.com.br /etc/nginx/sites-enabled/
+        ln -sf /etc/nginx/sites-available/manager.skipy.com.br /etc/nginx/sites-enabled/
+        ln -sf /etc/nginx/sites-available/skipy.com.br /etc/nginx/sites-enabled/
         nginx -s reload 2>/dev/null
 
-        warn "SSL certificate installation failed due to DNS issues."
-        warn "Please configure DNS first, then run SSL installation manually:"
-        warn "  sudo certbot --nginx -d $DOMAIN --email $EMAIL"
+        warn "SSL certificate installation failed."
+        warn "Manual SSL installation required:"
+        warn "  sudo certbot --nginx -d skipy.com.br -d www.skipy.com.br -d api.skipy.com.br -d client.skipy.com.br -d manager.skipy.com.br --email $EMAIL"
         warn ""
         warn "Continuing with HTTP-only configuration..."
 
@@ -1299,7 +1475,7 @@ server {
 EOF
 
         # Enable the new configuration
-        ln -sf /etc/nginx/sites-available/$APP_NAME /etc/nginx/sites-enabled/$APP_NAME
+        ln -sf /etc/nginx/sites-available/$APP_NAME /etc/nginx/sites-enabled/
 
         # Test and reload nginx
         if nginx -t 2>/dev/null; then
@@ -1344,56 +1520,124 @@ create_app_user() {
     task_complete "Application user and directory creation"
 }
 
-# Clone and setup application
+# Install Skipy application from wheel file
 setup_application() {
-    step "Cloning and Setting Up Skipy Application"
+    step "Installing Skipy Application from Wheel Package"
 
     log "Switching to app user for application setup..."
+
+    # First ensure the application directory exists and has correct ownership
+    log "Ensuring application directory exists with correct permissions..."
+    mkdir -p $APP_DIR
+    chown -R $APP_USER:$APP_GROUP $APP_DIR
+
     sudo -u $APP_USER bash << EOF
 set -e
 
-# Clone repository if it doesn't exist
-if [[ ! -d "$APP_DIR/.git" ]]; then
-    cd $APP_HOME
-    git clone https://github.com/your-username/fast-api-skipy.git || {
-        echo "Failed to clone repository. Please update the repository URL."
-        echo "Creating directory structure manually..."
-        mkdir -p $APP_DIR
-        cd $APP_DIR
-        git init
-    }
-else
+cd $APP_HOME
+
+# Check if wheel file exists for installation
+if [[ -f "$WHEEL_FILE_PATH" ]]; then
+    echo "✓ [$(date +'%H:%M:%S')] Found Skipy wheel file: $WHEEL_FILE_PATH"
+    echo "✓ [$(date +'%H:%M:%S')] Installing Skipy from wheel package..."
+
+    # Ensure we can write to the application directory
     cd $APP_DIR
-    git pull origin main || echo "Could not pull latest changes"
-fi
 
-cd $APP_DIR
+    # Create virtual environment
+    if [[ ! -d "venv" ]]; then
+        echo "✓ [$(date +'%H:%M:%S')] Creating Python virtual environment..."
+        python3 -m venv venv
+    fi
 
-# Create virtual environment
-if [[ ! -d "venv" ]]; then
-    python3 -m venv venv
-fi
+    # Activate virtual environment
+    source venv/bin/activate
 
-# Activate virtual environment and install dependencies
-source venv/bin/activate
+    # Upgrade pip first
+    echo "✓ [$(date +'%H:%M:%S')] Upgrading pip and setuptools..."
+    pip install --upgrade pip setuptools wheel
 
-# Upgrade pip
-pip install --upgrade pip setuptools wheel
+    # Install the Skipy application from wheel
+    echo "✓ [$(date +'%H:%M:%S')] Installing Skipy backend from wheel package..."
+    pip install "$WHEEL_FILE_PATH"
 
-# Install Python dependencies
-if [[ -f "requirements.txt" ]]; then
-    pip install -r requirements.txt
+    # Install additional production dependencies
+    echo "✓ [$(date +'%H:%M:%S')] Installing production dependencies..."
+    pip install gunicorn[gevent] supervisor psutil python-dotenv
+
+    # Create basic directory structure
+    echo "✓ [$(date +'%H:%M:%S')] Creating application directory structure..."
+    mkdir -p app/static
+    mkdir -p uploads/products
+
+    # Create a simple main.py if it doesn't exist
+    if [[ ! -f "app/main.py" ]]; then
+        echo "✓ [$(date +'%H:%M:%S')] Creating main.py entry point..."
+        mkdir -p app
+        cat > app/main.py << 'MAIN_EOF'
+# FastAPI Skipy Backend Main Entry Point
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+app = FastAPI(
+    title="Skipy Backend API",
+    description="E-commerce API for multi-store management",
+    version="1.0.0"
+)
+
+# CORS configuration
+origins = os.getenv("BACKEND_CORS_ORIGINS", "").split(",")
+if origins and origins[0]:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+@app.get("/")
+async def root():
+    return {"message": "Skipy Backend API", "version": "1.0.0", "status": "running"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "skipy-backend"}
+
+# Import and include routers when available
+try:
+    from skipy_backend.main import app as skipy_app
+    # Mount the actual application if available
+    app.mount("/api", skipy_app)
+    print("✓ Skipy backend application mounted successfully")
+except ImportError:
+    print("⚠ Skipy backend module not found, running in basic mode")
+    pass
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+MAIN_EOF
+    fi
+
+    echo "✓ [$(date +'%H:%M:%S')] Skipy application installed successfully from wheel package"
+
 else
-    echo "requirements.txt not found. Installing basic dependencies..."
-    pip install fastapi uvicorn gunicorn motor pymongo pydantic python-jose passlib bcrypt python-multipart email-validator httpx stripe python-dotenv websockets aiohttp
+    echo "✗ [$(date +'%H:%M:%S')] ERROR: Wheel file not found at $WHEEL_FILE_PATH"
+    echo "✗ [$(date +'%H:%M:%S')] Please ensure the wheel file '$WHEEL_FILE_NAME' is available at $WHEEL_FILE_PATH"
+    echo "✗ [$(date +'%H:%M:%S')] You can create the wheel file by running: python setup.py bdist_wheel"
+    echo "✗ [$(date +'%H:%M:%S')] Then copy it to: $WHEEL_FILE_PATH"
+    exit 1
 fi
-
-# Install additional production dependencies
-pip install gunicorn[gevent] supervisor psutil
 EOF
 
     log "Skipy application setup completed"
-    task_complete "Skipy application cloning and setup"
+    task_complete "Skipy application installation from wheel package"
 }
 
 # Create environment configuration
@@ -1612,6 +1856,7 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=$APP_HOME
+ReadWritePaths=$APP_DIR
 
 [Install]
 WantedBy=multi-user.target
@@ -1826,15 +2071,16 @@ show_completion_info() {
     echo "✅ System updated and secured"
     echo "✅ Python $PYTHON_VERSION installed"
     echo "✅ MongoDB $MONGODB_VERSION installed and configured"
-    echo "✅ Nginx installed and configured"
+    echo "✅ Nginx installed and configured for complete Skipy ecosystem"
 
-    # Check if SSL was actually installed
-    if [[ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]]; then
-        echo "✅ SSL certificate installed and configured"
+    # Check if SSL was actually installed for any domain
+    SSL_INSTALLED=false
+    if [[ -f "/etc/letsencrypt/live/skipy.com.br/fullchain.pem" ]] || \
+       [[ -f "/etc/letsencrypt/live/api.skipy.com.br/fullchain.pem" ]]; then
+        echo "✅ SSL certificates installed and configured for all domains"
         SSL_INSTALLED=true
     else
-        echo "⚠️  SSL certificate not installed (DNS configuration needed)"
-        SSL_INSTALLED=false
+        echo "⚠️  SSL certificates not installed (DNS configuration needed)"
     fi
 
     echo "✅ Application user '$APP_USER' created"
@@ -1844,72 +2090,114 @@ show_completion_info() {
     echo "✅ Log rotation configured"
     echo "✅ Backup system configured"
 
-    echo -e "\n${YELLOW}=== Important Information ===${NC}"
+    echo -e "\n${YELLOW}=== Skipy Ecosystem Configuration ===${NC}"
     echo "🏠 Application directory: $APP_DIR"
     echo "👤 Application user: $APP_USER"
-    echo "🌐 Domain: $DOMAIN"
     echo "📝 Environment file: $APP_DIR/.env"
     echo "📋 Logs directory: $APP_HOME/logs"
     echo "💾 Backups directory: $APP_HOME/backups"
 
-    # Show different next steps based on SSL status
-    if [[ "$SSL_INSTALLED" == "false" && "$DOMAIN" != "localhost" ]]; then
+    echo -e "\n${CYAN}🌐 Configured Domains:${NC}"
+    if [[ "$SSL_INSTALLED" == "true" ]]; then
+        echo "  • https://skipy.com.br (Main landing page)"
+        echo "  • https://www.skipy.com.br (Main landing page)"
+        echo "  • https://api.skipy.com.br (FastAPI backend)"
+        echo "  • https://client.skipy.com.br (React client app)"
+        echo "  • https://manager.skipy.com.br (React manager app)"
+    else
+        echo "  • http://skipy.com.br (Main landing page)"
+        echo "  • http://www.skipy.com.br (Main landing page)"
+        echo "  • http://api.skipy.com.br (FastAPI backend)"
+        echo "  • http://client.skipy.com.br (React client app)"
+        echo "  • http://manager.skipy.com.br (React manager app)"
+    fi
+
+    echo -e "\n${CYAN}📁 Web Directories:${NC}"
+    echo "  • /var/www/client (React client build files)"
+    echo "  • /var/www/manager (React manager build files)"
+    echo "  • $APP_DIR (FastAPI backend application)"
+
+    # Show DNS configuration requirements if SSL not installed
+    if [[ "$SSL_INSTALLED" == "false" ]]; then
         echo -e "\n${RED}=== DNS Configuration Required ===${NC}"
-        SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null)
-        echo "To enable SSL certificate, configure DNS:"
-        echo "1. Create an A record for $DOMAIN pointing to: $SERVER_IP"
-        echo "2. Wait for DNS propagation (5-60 minutes)"
-        echo "3. Run SSL installation manually:"
-        echo "   sudo certbot --nginx -d $DOMAIN --email $EMAIL"
-        echo "4. Restart Nginx: sudo systemctl reload nginx"
+        SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || echo "$DEFAULT_SERVER_IP")
+        echo "To enable SSL certificates, configure DNS records:"
+        echo "  • skipy.com.br → $SERVER_IP"
+        echo "  • www.skipy.com.br → $SERVER_IP"
+        echo "  • api.skipy.com.br → $SERVER_IP"
+        echo "  • client.skipy.com.br → $SERVER_IP"
+        echo "  • manager.skipy.com.br → $SERVER_IP"
+        echo ""
+        echo "After DNS propagation (5-60 minutes), run:"
+        echo "  sudo certbot --nginx -d skipy.com.br -d www.skipy.com.br -d api.skipy.com.br -d client.skipy.com.br -d manager.skipy.com.br --email $EMAIL"
     fi
 
     echo -e "\n${BLUE}=== Next Steps ===${NC}"
-    echo "1. Update environment variables in: $APP_DIR/.env"
-    echo "   - Add your Stripe API keys"
-    echo "   - Add your email service credentials"
-    echo "   - Add your SMS service credentials"
-    echo "   - Update notification emails/phones"
+    echo "1. Configure DNS records (if not done already):"
+    echo "   • Point all domains to your server IP: $DEFAULT_SERVER_IP"
+    echo "   • Wait for DNS propagation"
 
-    echo -e "\n2. Restart the application after updating .env:"
-    echo "   sudo systemctl restart $APP_NAME"
+    echo -e "\n2. Update environment variables in: $APP_DIR/.env"
+    echo "   • Add your Stripe API keys"
+    echo "   • Add your email service credentials"
+    echo "   • Add your SMS service credentials"
+    echo "   • Update notification emails/phones"
 
-    echo -e "\n3. Test your installation:"
+    echo -e "\n3. Deploy React applications:"
+    echo "   • Build your React client app and copy to: /var/www/client/"
+    echo "   • Build your React manager app and copy to: /var/www/manager/"
+    echo "   • Set proper ownership: sudo chown -R www-data:www-data /var/www/client /var/www/manager"
+
+    echo -e "\n4. Restart services after configuration:"
+    echo "   • sudo systemctl restart $APP_NAME"
+    echo "   • sudo systemctl reload nginx"
+
+    echo -e "\n${BLUE}=== Testing Your Installation ===${NC}"
+    echo "Test each domain:"
+    PROTOCOL="http"
     if [[ "$SSL_INSTALLED" == "true" ]]; then
-        echo "   curl https://$DOMAIN/health"
-        echo "   curl https://$DOMAIN/api/v1/docs"
-    else
-        echo "   curl http://$DOMAIN/health"
-        echo "   curl http://$DOMAIN/api/v1/docs"
+        PROTOCOL="https"
     fi
 
-    echo -e "\n${BLUE}=== Useful Commands ===${NC}"
-    echo "📊 Check status:     sudo $APP_HOME/monitor.sh"
-    echo "📋 View logs:        sudo journalctl -u $APP_NAME -f"
-    echo "🔄 Restart app:      sudo systemctl restart $APP_NAME"
-    echo "🔧 Update app:       cd $APP_DIR && git pull && sudo systemctl restart $APP_NAME"
+    echo "  • curl $PROTOCOL://skipy.com.br"
+    echo "  • curl $PROTOCOL://api.skipy.com.br/health"
+    echo "  • curl $PROTOCOL://api.skipy.com.br/docs (API documentation)"
+    echo "  • Visit $PROTOCOL://client.skipy.com.br (client app)"
+    echo "  • Visit $PROTOCOL://manager.skipy.com.br (manager app)"
+
+    echo -e "\n${BLUE}=== Useful Management Commands ===${NC}"
+    echo "📊 System status:    sudo $APP_HOME/monitor.sh"
+    echo "📋 API logs:         sudo journalctl -u $APP_NAME -f"
+    echo "📄 Nginx logs:       sudo tail -f /var/log/nginx/error.log"
+    echo "🔄 Restart API:      sudo systemctl restart $APP_NAME"
+    echo "🔄 Restart Nginx:    sudo systemctl restart nginx"
+    echo "🔧 Update API:       cd $APP_DIR && git pull && sudo systemctl restart $APP_NAME"
     echo "💾 Manual backup:    sudo -u $APP_USER $APP_HOME/backup.sh"
+    echo "🔐 SSL renewal:      sudo certbot renew --dry-run"
 
-    # Show appropriate URL based on SSL status
+    echo -e "\n${BLUE}=== File Deployment Commands ===${NC}"
+    echo "Deploy React Client:"
+    echo "  • scp -r ./client/build/* root@$DEFAULT_SERVER_IP:/var/www/client/"
+    echo "  • sudo chown -R www-data:www-data /var/www/client"
+    echo ""
+    echo "Deploy React Manager:"
+    echo "  • scp -r ./manager/build/* root@$DEFAULT_SERVER_IP:/var/www/manager/"
+    echo "  • sudo chown -R www-data:www-data /var/www/manager"
+
+    echo -e "\n${GREEN}🚀 Skipy Ecosystem Installation Completed! 🎉${NC}"
+
     if [[ "$SSL_INSTALLED" == "true" ]]; then
-        echo -e "\n🌐 Your API is available at: https://$DOMAIN"
-        echo "📖 API Documentation: https://$DOMAIN/api/v1/docs"
+        echo -e "\n${GREEN}✅ All domains are secure with HTTPS certificates${NC}"
+        echo -e "🌐 Your complete Skipy ecosystem is ready for production!"
     else
-        if [[ "$DOMAIN" != "localhost" ]]; then
-            echo -e "\n🌐 Your API is currently available at: http://$DOMAIN"
-            echo "📖 API Documentation: http://$DOMAIN/api/v1/docs"
-            echo "🔒 After DNS configuration, it will be available at: https://$DOMAIN"
-        else
-            echo -e "\n🌐 Your API is available at: http://localhost"
-            echo "📖 API Documentation: http://localhost/api/v1/docs"
-        fi
+        echo -e "\n${YELLOW}⚠️ Configure DNS records and run SSL setup to enable HTTPS${NC}"
+        echo -e "🌐 Your Skipy ecosystem is running on HTTP (configure SSL for production)"
     fi
 
-    echo -e "\n${GREEN}Installation completed! 🎉${NC}"
-
-    if [[ "$SSL_INSTALLED" == "false" && "$DOMAIN" != "localhost" ]]; then
-        echo -e "\n${YELLOW}Note: Configure DNS and run SSL setup to enable HTTPS${NC}"
-    fi
+    echo -e "\n${CYAN}📧 Email Configuration Note:${NC}"
+    echo "Since you're using info@skipy.io (not skipy.com.br), configure email separately:"
+    echo "• Set up MX, SPF, DKIM, DMARC records for skipy.io domain"
+    echo "• Ensure email DNS records have proxy OFF (grey cloud) in Cloudflare"
 }
 
 # Main installation function
@@ -1929,43 +2217,61 @@ main() {
     echo "• Production services and monitoring"
     echo ""
 
+    # STEP 1: System validation
     check_root
+
+    # STEP 2: User input and configuration
     collect_input
 
     log "Starting comprehensive installation process..."
     log "Total steps to complete: $TOTAL_STEPS"
     echo ""
 
-    # System preparation
+    # STEP 3: System preparation and updates
     update_system
+
+    # STEP 4: Python installation and setup
     install_python
+
+    # STEP 5: Shell enhancement (Oh My Zsh)
     install_ohmyzsh
 
-    # Database and web server
+    # STEP 6: Database installation (MongoDB)
     install_mongodb
+
+    # STEP 7: Web server installation (Nginx)
     install_nginx
 
-    # Application setup
+    # STEP 8: Application user and directory setup
     create_app_user
 
     # Setup Oh My Zsh for application user after user creation
     log "Setting up Oh My Zsh for application user..."
     setup_app_user_zsh
 
+    # STEP 9: Application installation and setup
     setup_application
+
+    # STEP 10: Environment configuration
     create_env_config
+
+    # STEP 11: Database initialization
     init_database
 
-    # Service configuration
+    # STEP 12: Systemd service creation
     create_systemd_service
+
+    # STEP 13: Firewall configuration
     configure_firewall
+
+    # STEP 14: Log rotation setup
     setup_log_rotation
 
-    # Operational tools
+    # Operational tools setup
     create_backup_script
     create_monitoring_script
 
-    # SSL and final service startup
+    # STEP 15: SSL certificate and final service startup
     install_ssl  # This must come after nginx is configured
     start_services
 
@@ -1976,5 +2282,5 @@ main() {
     echo -e "${CYAN}Skipy is now ready for production use.${NC}"
 }
 
-# Run main function
+# Execute the main function
 main "$@"
