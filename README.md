@@ -64,7 +64,7 @@ python -m unittest discover -s tests
 - **[[Dev Community] Test Python Code Like a Pro with Poetry, Tox, Nox and CI/CD](https://bit.ly/test-python-poetry-tox-nox-cicd)** - Improving your test coverage with multiple python versions through the use of of tools like Poetry, Pytest, Tox, Nox and CI/CD.
 - **[[Dev Community] Python Multithreading: Unlocking Concurrency for Better Performance](https://bit.ly/python-multithreading)** - The essentials of Python multithreading with practical examples and best practices to enhance application performance through concurrency. A must-read, to understand threading application performance in deep.
 - **[[DZone] Secure Password Hashing in Java: Best Practices and Code Examples](https://bit.ly/secure-password-hashing-in-java)** - Secure password hashing using modern algorithms like BCrypt, Argon2, and PBKDF2 with salting and computational intensity for better security, as alternative to SHA-512.
-- **More available on [my LinkedIn](https://www.linkedin.com/in/wallaceespindola)**.
+- **More available on [my LinkedIn page](https://www.linkedin.com/in/wallaceespindola)**.
 
 ## Author
 
@@ -80,7 +80,7 @@ python -m unittest discover -s tests
 - **Website:** [W-Tech IT Solutions](https://www.wtechitsolutions.com/)
 - **Substack:** [wallaceespindola.substack.com](https://wallaceespindola.substack.com/)
 - **Medium:** [medium.com/@wallaceespindola](https://medium.com/@wallaceespindola)
-- **Slides:** [Speakerdeck](https://speakerdeck.com/wallacese)
+- **Slides:** [speakerdeck.com/wallacese](https://speakerdeck.com/wallacese)
 
 ## License
 
