@@ -22,7 +22,7 @@
 # - DNS records configured for all domains (optional for SSL)
 #
 # PREPARATION:
-# 1. Build the wheel file: python setup.py bdist_wheel
+# 1. Build the wheel file: python3.11 -m build
 # 2. Copy wheel file to VPS: scp dist/skipy_backend-0.1.0-py3-none-any.whl root@YOUR_IP:/tmp/
 # 3. Run this script: chmod +x install_server.sh && sudo ./install_server.sh
 #
@@ -106,7 +106,7 @@ EMAIL=""
 SERVER_IP=""
 
 # Installation progress tracking
-TOTAL_STEPS=15
+TOTAL_STEPS=18
 CURRENT_STEP=0
 
 #================================================================
@@ -420,11 +420,12 @@ install_default_python() {
     INSTALLED_PYTHON_VERSION=$(python3 --version 2>/dev/null | cut -d' ' -f2 | cut -d'.' -f1,2)
     log "Installed Python version: $INSTALLED_PYTHON_VERSION"
 
-    if [[ "$INSTALLED_PYTHON_VERSION" < "3.10" ]]; then
+    # Use proper version comparison instead of string comparison
+    if python3 -c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)" 2>/dev/null; then
+        log "Python version is compatible with Skipy requirements"
+    else
         warn "Python version is older than 3.10 - application may have compatibility issues"
         warn "Recommend upgrading to Python 3.10+ for best performance"
-    else
-        log "Python version is compatible with Skipy requirements"
     fi
 }
 
@@ -1131,11 +1132,11 @@ install_ssl() {
 
     # Check domain resolution for main domains
     log "Checking domain resolution for Skipy domains..."
-    SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || echo "$DEFAULT_SERVER_IP")
+    SERVER_IP=$(curl -4 -s ifconfig.me 2>/dev/null || curl -4 -s ipinfo.io/ip 2>/dev/null || echo "$DEFAULT_SERVER_IP")
 
     DOMAINS_RESOLVED=true
     for domain in "${SKIPY_DOMAINS[@]}"; do
-        DOMAIN_IP=$(dig +short "$domain" 2>/dev/null | head -n1)
+        DOMAIN_IP=$(dig +short A "$domain" 2>/dev/null | head -n1)
         if [[ -z "$DOMAIN_IP" ]]; then
             warn "Domain $domain does not resolve to any IP address"
             DOMAINS_RESOLVED=false
@@ -1630,7 +1631,7 @@ MAIN_EOF
 else
     echo "✗ [$(date +'%H:%M:%S')] ERROR: Wheel file not found at $WHEEL_FILE_PATH"
     echo "✗ [$(date +'%H:%M:%S')] Please ensure the wheel file '$WHEEL_FILE_NAME' is available at $WHEEL_FILE_PATH"
-    echo "✗ [$(date +'%H:%M:%S')] You can create the wheel file by running: python setup.py bdist_wheel"
+    echo "✗ [$(date +'%H:%M:%S')] You can create the wheel file by running: python3.11 -m build"
     echo "✗ [$(date +'%H:%M:%S')] Then copy it to: $WHEEL_FILE_PATH"
     exit 1
 fi
@@ -2090,12 +2091,6 @@ show_completion_info() {
     echo "✅ Log rotation configured"
     echo "✅ Backup system configured"
 
-    echo -e "\n${YELLOW}=== Skipy Ecosystem Configuration ===${NC}"
-    echo "🏠 Application directory: $APP_DIR"
-    echo "👤 Application user: $APP_USER"
-    echo "📝 Environment file: $APP_DIR/.env"
-    echo "📋 Logs directory: $APP_HOME/logs"
-    echo "💾 Backups directory: $APP_HOME/backups"
 
     echo -e "\n${CYAN}🌐 Configured Domains:${NC}"
     if [[ "$SSL_INSTALLED" == "true" ]]; then
@@ -2200,8 +2195,8 @@ show_completion_info() {
     echo "• Ensure email DNS records have proxy OFF (grey cloud) in Cloudflare"
 }
 
-# Main installation function
-main() {
+# Display preparation information and requirements
+show_preparation_info() {
     echo -e "${BLUE}"
     echo "================================================================"
     echo "         FastAPI Skipy Backend - Ubuntu VPS Installer"
@@ -2216,6 +2211,75 @@ main() {
     echo "• Skipy FastAPI application"
     echo "• Production services and monitoring"
     echo ""
+
+    echo -e "${RED}================================================================"
+    echo "                    ⚠️  IMPORTANT PREPARATION REQUIRED  ⚠️"
+    echo -e "================================================================${NC}"
+    echo -e "${YELLOW}Before running this script, you MUST prepare the following files:${NC}"
+    echo ""
+    echo -e "${CYAN}1. Build the Skipy wheel package:${NC}"
+    echo "   cd /home/skipy/fast-api-skipy/"
+    echo "   python3.11 -m build"
+    echo ""
+    echo -e "${CYAN}2. Copy the wheel file to the server:${NC}"
+    echo "   scp dist/$WHEEL_FILE_NAME root@$DEFAULT_SERVER_IP:/tmp/"
+    echo ""
+    echo -e "${CYAN}3. (Optional) Copy your custom .env file to the server:${NC}"
+    echo "   scp .env root@$DEFAULT_SERVER_IP:/tmp/skipy.env"
+    echo -e "   ${YELLOW}Note: If not provided, a default .env will be created${NC}"
+    echo ""
+    echo -e "${CYAN}4. Ensure DNS records are configured (for SSL certificates):${NC}"
+    echo "   • skipy.com.br → $DEFAULT_SERVER_IP"
+    echo "   • www.skipy.com.br → $DEFAULT_SERVER_IP"
+    echo "   • api.skipy.com.br → $DEFAULT_SERVER_IP"
+    echo "   • client.skipy.com.br → $DEFAULT_SERVER_IP"
+    echo "   • manager.skipy.com.br → $DEFAULT_SERVER_IP"
+    echo ""
+    echo -e "${RED}Required files checklist:${NC}"
+    echo -e "  ${GREEN}✓${NC} Wheel file: $WHEEL_FILE_PATH"
+    echo -e "  ${YELLOW}○${NC} Custom .env: /tmp/skipy.env (optional)"
+    echo ""
+
+    # Check if wheel file exists
+    if [[ ! -f "$WHEEL_FILE_PATH" ]]; then
+        echo -e "${RED}❌ ERROR: Required wheel file not found!${NC}"
+        echo -e "${RED}   Missing: $WHEEL_FILE_PATH${NC}"
+        echo ""
+        echo -e "${YELLOW}Please run the following commands to prepare:${NC}"
+        echo "1. Build wheel: python3.11 -m build"
+        echo "2. Copy to server: scp dist/$WHEEL_FILE_NAME root@$DEFAULT_SERVER_IP:/tmp/"
+        echo "3. Run this script again"
+        echo ""
+        exit 1
+    else
+        echo -e "  ${GREEN}✓ Wheel file found: $WHEEL_FILE_PATH${NC}"
+    fi
+
+    # Check for optional custom .env file
+    if [[ -f "/tmp/skipy.env" ]]; then
+        echo -e "  ${GREEN}✓ Custom .env file found: /tmp/skipy.env${NC}"
+        echo -e "  ${CYAN}   Will be used during environment configuration${NC}"
+    else
+        echo -e "  ${YELLOW}⚠️  No custom .env file found${NC}"
+        echo -e "  ${CYAN}   Default .env will be created with secure defaults${NC}"
+    fi
+
+    echo ""
+    echo -e "${GREEN}================================================================"
+    echo "                    🚀 READY TO START INSTALLATION"
+    echo -e "================================================================${NC}"
+    echo ""
+
+    # Pause for user to review - fix the read command using printf approach
+    printf "Press Enter to continue with the installation, or Ctrl+C to abort..."
+    read -r
+    echo ""
+}
+
+# Main installation function
+main() {
+    # Show preparation information and validate requirements
+    show_preparation_info
 
     # STEP 1: System validation
     check_root
@@ -2245,33 +2309,36 @@ main() {
     # STEP 8: Application user and directory setup
     create_app_user
 
-    # Setup Oh My Zsh for application user after user creation
-    log "Setting up Oh My Zsh for application user..."
+    # STEP 9: Oh My Zsh setup for application user
+    step "Setting Up Oh My Zsh for Application User"
     setup_app_user_zsh
+    task_complete "Oh My Zsh setup for application user"
 
-    # STEP 9: Application installation and setup
+    # STEP 10: Application installation and setup
     setup_application
 
-    # STEP 10: Environment configuration
+    # STEP 11: Environment configuration
     create_env_config
 
-    # STEP 11: Database initialization
+    # STEP 12: Database initialization
     init_database
 
-    # STEP 12: Systemd service creation
+    # STEP 13: Systemd service creation
     create_systemd_service
 
-    # STEP 13: Firewall configuration
+    # STEP 14: Firewall configuration
     configure_firewall
 
-    # STEP 14: Log rotation setup
+    # STEP 15: Log rotation setup
     setup_log_rotation
 
-    # Operational tools setup
+    # STEP 16: Backup script creation
     create_backup_script
+
+    # STEP 17: Monitoring script creation
     create_monitoring_script
 
-    # STEP 15: SSL certificate and final service startup
+    # STEP 18: SSL certificates and service startup
     install_ssl  # This must come after nginx is configured
     start_services
 
