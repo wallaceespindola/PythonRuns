@@ -4,7 +4,7 @@
 # FastAPI Skipy Backend - Ubuntu VPS Installation Script
 #================================================================
 # This script automates the complete setup of the Skipy backend
-# on Ubuntu 20.04+ VPS, including all dependencies, services,
+# on Ubuntu 20.04+ VPS (tested up to Ubuntu 24.04 LTS), including all dependencies, services,
 # and production configurations.
 #
 # Author: Wallace Espindola (Skipy Team)
@@ -17,18 +17,18 @@
 # - React Manager App: https://manager.skipy.com.br
 #
 # REQUIREMENTS:
-# - Ubuntu 20.04+ VPS with root access
+# - Ubuntu 20.04+ VPS with root access (tested on Ubuntu 24.04.3 LTS)
 # - Skipy wheel file: skipy_backend-0.1.0-py3-none-any.whl
 # - DNS records configured for all domains (optional for SSL)
 #
 # PREPARATION:
-# 1. Build the wheel file: python3.11 -m build
+# 1. Build the wheel file: python3.12 -m build
 # 2. Copy wheel file to VPS: scp dist/skipy_backend-0.1.0-py3-none-any.whl root@YOUR_IP:/tmp/
 # 3. Run this script: chmod +x install_server.sh && sudo ./install_server.sh
 #
 # FEATURES:
 # - Complete Skipy ecosystem setup (API, Client, Manager domains)
-# - Python 3.11 + MongoDB 7.0 + Nginx with SSL
+# - Python 3.12 + MongoDB 8.2 + Nginx with SSL
 # - Oh My Zsh with Jonathan theme
 # - Production-ready configuration with monitoring and backups
 # - Multi-domain SSL certificate support
@@ -62,9 +62,9 @@ APP_HOME="/home/$APP_USER"
 APP_DIR="/opt/skipy-backend"
 
 # Software versions
-PYTHON_VERSION="3.11"
-NODE_VERSION="18"
-MONGODB_VERSION="7.0"
+PYTHON_VERSION="3.12"
+NODE_VERSION="22"
+MONGODB_VERSION="8.2"
 
 # Skipy application configuration
 WHEEL_FILE_NAME="skipy_backend-0.1.0-py3-none-any.whl"
@@ -106,7 +106,7 @@ EMAIL=""
 SERVER_IP=""
 
 # Installation progress tracking
-TOTAL_STEPS=18
+TOTAL_STEPS=19
 CURRENT_STEP=0
 
 #================================================================
@@ -242,33 +242,50 @@ collect_input() {
 update_system() {
     step "Updating System Packages"
 
-    log "Updating package lists..."
-    apt update
+    # Check if system was recently updated (within last 24 hours)
+    if [[ -f "/var/lib/apt/periodic/update-success-stamp" ]]; then
+        LAST_UPDATE=$(stat -c %Y /var/lib/apt/periodic/update-success-stamp 2>/dev/null || echo 0)
+        CURRENT_TIME=$(date +%s)
+        TIME_DIFF=$((CURRENT_TIME - LAST_UPDATE))
 
-    log "Upgrading existing packages..."
-    apt upgrade -y
+        if [[ $TIME_DIFF -lt 86400 ]]; then
+            log "System packages updated recently (within 24 hours) - skipping update"
+        else
+            log "Updating package lists..."
+            apt update
+        fi
+    else
+        log "Updating package lists..."
+        apt update
+    fi
 
-    log "Installing essential system packages..."
-    apt install -y \
-        curl \
-        wget \
-        git \
-        unzip \
-        software-properties-common \
-        apt-transport-https \
-        ca-certificates \
-        gnupg \
-        lsb-release \
-        htop \
-        tree \
-        vim \
-        nano \
-        ufw \
-        fail2ban \
-        logrotate
+    # Check if essential packages are already installed
+    MISSING_PACKAGES=()
+    ESSENTIAL_PACKAGES=(curl wget git unzip software-properties-common apt-transport-https ca-certificates gnupg lsb-release htop tree vim nano ufw fail2ban logrotate)
 
-    log "Essential packages installed successfully"
-    log "System updated and prepared for installation"
+    for package in "${ESSENTIAL_PACKAGES[@]}"; do
+        if ! dpkg -l "$package" &>/dev/null; then
+            MISSING_PACKAGES+=("$package")
+        fi
+    done
+
+    if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
+        log "Installing missing essential packages: ${MISSING_PACKAGES[*]}"
+        apt install -y "${MISSING_PACKAGES[@]}"
+    else
+        log "All essential packages already installed"
+    fi
+
+    # Check if upgrade is needed
+    UPGRADEABLE=$(apt list --upgradable 2>/dev/null | wc -l)
+    if [[ $UPGRADEABLE -gt 1 ]]; then
+        log "Upgrading $((UPGRADEABLE-1)) packages..."
+        apt upgrade -y
+    else
+        log "System packages are up to date"
+    fi
+
+    log "System update and package installation completed"
     task_complete "System package updates"
 }
 
@@ -279,6 +296,33 @@ update_system() {
 # Install Python and development tools
 install_python() {
     step "Installing Python $PYTHON_VERSION and Development Tools"
+
+    # Check if Python 3.12 is already installed and working
+    if python3 --version 2>/dev/null | grep -q "Python 3\.12"; then
+        log "Python 3.12 already installed and configured"
+        INSTALLED_VERSION=$(python3 --version)
+        log "Current Python version: $INSTALLED_VERSION"
+
+        # Check if development packages are installed
+        MISSING_PYTHON_PACKAGES=()
+        PYTHON_PACKAGES=(python3-dev python3-venv python3-pip build-essential libssl-dev libffi-dev)
+
+        for package in "${PYTHON_PACKAGES[@]}"; do
+            if ! dpkg -l "$package" &>/dev/null; then
+                MISSING_PYTHON_PACKAGES+=("$package")
+            fi
+        done
+
+        if [[ ${#MISSING_PYTHON_PACKAGES[@]} -gt 0 ]]; then
+            log "Installing missing Python development packages: ${MISSING_PYTHON_PACKAGES[*]}"
+            apt install -y "${MISSING_PYTHON_PACKAGES[@]}"
+        else
+            log "All Python development packages already installed"
+        fi
+
+        task_complete "Python $PYTHON_VERSION installation (already configured)"
+        return 0
+    fi
 
     # Fix common apt issues first
     log "Fixing potential apt_pkg and command-not-found issues..."
@@ -395,11 +439,14 @@ install_python() {
 install_default_python() {
     log "Installing Python from default Ubuntu repositories..."
 
+    # Ubuntu 24.04 (Noble) comes with Python 3.12 by default, which is perfect
     DEBIAN_FRONTEND=noninteractive apt install -y \
         python3 \
         python3-dev \
         python3-venv \
         python3-pip \
+        python3-setuptools \
+        python3-wheel \
         build-essential \
         libssl-dev \
         libffi-dev \
@@ -413,6 +460,7 @@ install_default_python() {
         libxml2-dev \
         libxmlsec1-dev \
         liblzma-dev \
+        pkg-config \
         2>/dev/null || {
             error "Failed to install Python from default repositories"
         }
@@ -420,9 +468,12 @@ install_default_python() {
     INSTALLED_PYTHON_VERSION=$(python3 --version 2>/dev/null | cut -d' ' -f2 | cut -d'.' -f1,2)
     log "Installed Python version: $INSTALLED_PYTHON_VERSION"
 
-    # Use proper version comparison instead of string comparison
+    # Ubuntu 24.04 Noble has Python 3.12 which is excellent for Skipy
     if python3 -c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)" 2>/dev/null; then
         log "Python version is compatible with Skipy requirements"
+        if python3 -c "import sys; exit(0 if sys.version_info >= (3, 12) else 1)" 2>/dev/null; then
+            log "Excellent! Python 3.12+ detected - optimal for Skipy performance"
+        fi
     else
         warn "Python version is older than 3.10 - application may have compatibility issues"
         warn "Recommend upgrading to Python 3.10+ for best performance"
@@ -624,6 +675,33 @@ EOF
 install_mongodb() {
     step "Installing MongoDB $MONGODB_VERSION Database"
 
+    # Check if MongoDB is already installed and running
+    if command -v mongod &> /dev/null || command -v mongosh &> /dev/null; then
+        log "MongoDB already installed - checking version and configuration..."
+
+        # Determine which MongoDB service is available
+        if systemctl is-active --quiet mongod 2>/dev/null; then
+            MONGODB_SERVICE="mongod"
+            log "MongoDB service 'mongod' is running"
+        elif systemctl is-active --quiet mongodb 2>/dev/null; then
+            MONGODB_SERVICE="mongodb"
+            log "MongoDB service 'mongodb' is running"
+        else
+            log "MongoDB installed but not running - will configure and start"
+        fi
+
+        # Check if configuration is already proper
+        if [[ -f "/etc/mongod.conf" ]] && grep -q "authorization: enabled" /etc/mongod.conf; then
+            log "MongoDB configuration already includes authentication"
+        else
+            log "MongoDB configuration needs to be updated"
+            configure_mongodb_service
+        fi
+
+        task_complete "MongoDB $MONGODB_VERSION installation (already configured)"
+        return 0
+    fi
+
     # Detect Ubuntu version for repository compatibility
     UBUNTU_CODENAME=$(lsb_release -cs)
     log "Detected Ubuntu codename: $UBUNTU_CODENAME"
@@ -736,8 +814,6 @@ configure_mongodb_service() {
 # Storage configuration
 storage:
   dbPath: $MONGO_DATA_PATH
-  journal:
-    enabled: true
 
 # Logging configuration
 systemLog:
@@ -1012,9 +1088,12 @@ EOF
 server {
     server_name skipy.com.br www.skipy.com.br;
 
+    # Set charset to UTF-8 for proper emoji display
+    charset utf-8;
+
     location / {
         return 200 'Hello from Skipy 🚀';
-        add_header Content-Type text/plain;
+        add_header Content-Type "text/plain; charset=utf-8";
     }
 
     # Security headers
@@ -1134,32 +1213,75 @@ install_ssl() {
     log "Checking domain resolution for Skipy domains..."
     SERVER_IP=$(curl -4 -s ifconfig.me 2>/dev/null || curl -4 -s ipinfo.io/ip 2>/dev/null || echo "$DEFAULT_SERVER_IP")
 
+    # Known Cloudflare IP ranges (simplified check)
+    CLOUDFLARE_IPS=(
+        "104.21."    # Cloudflare range
+        "172.67."    # Cloudflare range
+        "104.16."    # Cloudflare range
+        "104.17."    # Cloudflare range
+        "104.18."    # Cloudflare range
+        "104.19."    # Cloudflare range
+        "104.20."    # Cloudflare range
+        "104.22."    # Cloudflare range
+        "104.23."    # Cloudflare range
+        "104.24."    # Cloudflare range
+        "104.25."    # Cloudflare range
+        "104.26."    # Cloudflare range
+        "104.27."    # Cloudflare range
+        "104.28."    # Cloudflare range
+        "172.64."    # Cloudflare range
+        "172.65."    # Cloudflare range
+        "172.66."    # Cloudflare range
+        "172.68."    # Cloudflare range
+        "172.69."    # Cloudflare range
+        "172.70."    # Cloudflare range
+        "172.71."    # Cloudflare range
+    )
+
+    # Function to check if IP is Cloudflare
+    is_cloudflare_ip() {
+        local ip="$1"
+        for cf_range in "${CLOUDFLARE_IPS[@]}"; do
+            if [[ "$ip" == $cf_range* ]]; then
+                return 0
+            fi
+        done
+        return 1
+    }
+
     DOMAINS_RESOLVED=true
+    CLOUDFLARE_DETECTED=false
     for domain in "${SKIPY_DOMAINS[@]}"; do
         DOMAIN_IP=$(dig +short A "$domain" 2>/dev/null | head -n1)
         if [[ -z "$DOMAIN_IP" ]]; then
             warn "Domain $domain does not resolve to any IP address"
             DOMAINS_RESOLVED=false
-        elif [[ -n "$SERVER_IP" && "$DOMAIN_IP" != "$SERVER_IP" ]]; then
-            warn "Domain $domain resolves to $DOMAIN_IP but server IP is $SERVER_IP"
-            DOMAINS_RESOLVED=false
+        elif is_cloudflare_ip "$DOMAIN_IP"; then
+            log "✓ $domain resolves to Cloudflare IP: $DOMAIN_IP (proxy detected)"
+            CLOUDFLARE_DETECTED=true
+        elif [[ -n "$SERVER_IP" && "$DOMAIN_IP" == "$SERVER_IP" ]]; then
+            log "✓ $domain resolves directly to server IP: $SERVER_IP"
         else
-            log "✓ $domain resolves correctly to $SERVER_IP"
+            warn "Domain $domain resolves to $DOMAIN_IP but server IP is $SERVER_IP"
+            log "This might be a CDN/proxy service - continuing with SSL installation..."
         fi
     done
 
     if [[ "$DOMAINS_RESOLVED" == "false" ]]; then
         warn "DNS Configuration Issues Detected:"
-        warn "Please configure DNS records for all Skipy domains:"
-        for domain in "${SKIPY_DOMAINS[@]}"; do
-            warn "  - Create A record for $domain pointing to: $SERVER_IP"
-        done
+        warn "Some domains do not resolve to any IP address."
+        warn "Please ensure all DNS records are properly configured."
         warn ""
         warn "After DNS configuration, run SSL installation manually:"
         warn "  sudo certbot --nginx -d skipy.com.br -d www.skipy.com.br -d api.skipy.com.br -d client.skipy.com.br -d manager.skipy.com.br --email $EMAIL"
         warn ""
         warn "Continuing installation without SSL certificates..."
         return 1
+    fi
+
+    if [[ "$CLOUDFLARE_DETECTED" == "true" ]]; then
+        log "Cloudflare proxy detected - this is fine for SSL certificate installation"
+        log "Cloudflare will handle the ACME challenge properly"
     fi
 
     # Fix Python cryptography issues first
@@ -1657,9 +1779,32 @@ create_env_config() {
         MONGO_APP_PASSWORD="your_mongo_password_here"
     fi
 
-    # Create .env file
-    log "Creating .env configuration file for Skipy..."
-    sudo -u $APP_USER tee $APP_DIR/.env > /dev/null << EOF
+    # Check if custom .env file is provided
+    if [[ -f "/tmp/skipy.env" ]]; then
+        log "Found custom .env file at /tmp/skipy.env"
+        log "Copying custom .env file to application directory..."
+
+        # Copy custom .env file
+        sudo -u $APP_USER cp /tmp/skipy.env $APP_DIR/.env
+
+        # Update MongoDB credentials in the custom .env file if they exist
+        if [[ "$MONGO_APP_PASSWORD" != "your_mongo_password_here" ]]; then
+            log "Updating MongoDB credentials in custom .env file..."
+            sudo -u $APP_USER sed -i "s/MONGO_URI=.*/MONGO_URI=mongodb:\/\/skipy_user:$MONGO_APP_PASSWORD@localhost:27017\/skipy_db/" $APP_DIR/.env
+        fi
+
+        # Update domain in custom .env file
+        sudo -u $APP_USER sed -i "s/BASE_URL=.*/BASE_URL=https:\/\/$DOMAIN/" $APP_DIR/.env
+
+        # Clean up
+        rm -f /tmp/skipy.env
+
+        log "Custom .env file applied successfully"
+    else
+        log "No custom .env file found - creating default configuration..."
+
+        # Create default .env file
+        sudo -u $APP_USER tee $APP_DIR/.env > /dev/null << EOF
 # MongoDB
 MONGO_URI=mongodb://skipy_user:$MONGO_APP_PASSWORD@localhost:27017/skipy_db
 MONGO_DB=skipy_db
@@ -1721,12 +1866,17 @@ RECIPIENT_EMAIL=orders@skipy.io
 RECIPIENT_PHONE=+1234567890
 EOF
 
+        log "Default .env configuration file created"
+    fi
+
     # Set proper permissions
     chown $APP_USER:$APP_GROUP $APP_DIR/.env
     chmod 600 $APP_DIR/.env
 
     log ".env configuration file created at $APP_DIR/.env"
-    warn "Please update the .env file with your actual API keys and credentials!"
+    if [[ ! -f "/tmp/skipy.env.backup" ]]; then
+        warn "Please update the .env file with your actual API keys and credentials!"
+    fi
     task_complete "Environment configuration creation"
 }
 
@@ -2040,28 +2190,103 @@ start_services() {
     step "Starting Services"
 
     log "Starting MongoDB service..."
-    systemctl start mongod
+    if systemctl start mongod 2>/dev/null; then
+        log "MongoDB service started successfully"
+    else
+        warn "MongoDB service failed to start via systemctl"
+        warn "Trying alternative MongoDB service names and methods..."
+
+        # Try alternative service names
+        if systemctl start mongodb 2>/dev/null; then
+            log "MongoDB started using 'mongodb' service name"
+        elif systemctl start mongod.service 2>/dev/null; then
+            log "MongoDB started using 'mongod.service' name"
+        else
+            warn "All MongoDB service start attempts failed"
+            warn "Manual commands to try:"
+            warn "  sudo systemctl status mongod"
+            warn "  sudo systemctl status mongodb"
+            warn "  sudo journalctl -u mongod --no-pager -n 20"
+            warn "  sudo mongod --config /etc/mongod.conf --fork"
+            warn "  sudo service mongod start"
+        fi
+    fi
 
     log "Starting Skipy application service..."
-    systemctl start $APP_NAME
+    if systemctl start $APP_NAME 2>/dev/null; then
+        log "Skipy application service started successfully"
+    else
+        warn "Skipy application service failed to start"
+        warn "Manual commands to troubleshoot:"
+        warn "  sudo systemctl status $APP_NAME"
+        warn "  sudo journalctl -u $APP_NAME --no-pager -n 20"
+        warn "  sudo systemctl daemon-reload && sudo systemctl start $APP_NAME"
+        warn "  cd $APP_DIR && sudo -u $APP_USER venv/bin/gunicorn app.main:app --bind 127.0.0.1:8000"
+    fi
 
     log "Restarting Nginx to apply changes..."
-    systemctl restart nginx
+    if systemctl restart nginx 2>/dev/null; then
+        log "Nginx restarted successfully"
+    else
+        warn "Nginx restart failed"
+        warn "Manual commands to troubleshoot:"
+        warn "  sudo nginx -t"
+        warn "  sudo systemctl status nginx"
+        warn "  sudo journalctl -u nginx --no-pager -n 10"
+        warn "  sudo systemctl reload nginx"
+    fi
 
-    # Check service status
+    # Check service status with more detailed feedback
+    log "Checking service status..."
     sleep 5
 
     services=("mongod" "nginx" "$APP_NAME")
+    failed_services=()
+
     for service in "${services[@]}"; do
-        if systemctl is-active --quiet $service; then
+        if systemctl is-active --quiet $service 2>/dev/null; then
             info "✅ $service is running"
         else
-            error "❌ $service failed to start"
+            warn "❌ $service failed to start"
+            failed_services+=("$service")
+
+            # Show specific troubleshooting for each service
+            case $service in
+                "mongod")
+                    warn "MongoDB troubleshooting commands:"
+                    warn "  sudo systemctl status mongod"
+                    warn "  sudo journalctl -u mongod --no-pager -n 10"
+                    warn "  sudo tail -f /var/log/mongodb/mongod.log"
+                    warn "  sudo chown -R mongodb:mongodb /var/lib/mongodb"
+                    warn "  sudo chmod 755 /var/lib/mongodb"
+                    ;;
+                "nginx")
+                    warn "Nginx troubleshooting commands:"
+                    warn "  sudo nginx -t"
+                    warn "  sudo systemctl status nginx"
+                    warn "  sudo tail -f /var/log/nginx/error.log"
+                    ;;
+                "$APP_NAME")
+                    warn "Skipy application troubleshooting commands:"
+                    warn "  sudo systemctl status $APP_NAME"
+                    warn "  sudo journalctl -u $APP_NAME --no-pager -n 20"
+                    warn "  sudo tail -f $APP_HOME/logs/error.log"
+                    warn "  cd $APP_DIR && sudo -u $APP_USER venv/bin/python app/main.py"
+                    ;;
+            esac
+            echo ""
         fi
     done
 
-    log "All services started successfully"
-    task_complete "Service start"
+    if [[ ${#failed_services[@]} -eq 0 ]]; then
+        log "All services started successfully"
+    else
+        warn "Some services failed to start: ${failed_services[*]}"
+        warn "Installation completed but some services need manual attention"
+        warn "Check the troubleshooting commands above for each failed service"
+    fi
+
+    task_complete "Service start (with ${#failed_services[@]} issues)"
 }
 
 # Display completion information
@@ -2072,7 +2297,11 @@ show_completion_info() {
     echo "✅ System updated and secured"
     echo "✅ Python $PYTHON_VERSION installed"
     echo "✅ MongoDB $MONGODB_VERSION installed and configured"
-    echo "✅ Nginx installed and configured for complete Skipy ecosystem"
+    echo "✅ Nginx web server with SSL support"
+    echo "✅ Oh My Zsh with Jonathan theme"
+    echo "✅ Skipy FastAPI application"
+    echo "✅ Production services and monitoring"
+    echo ""
 
     # Check if SSL was actually installed for any domain
     SSL_INSTALLED=false
@@ -2219,7 +2448,7 @@ show_preparation_info() {
     echo ""
     echo -e "${CYAN}1. Build the Skipy wheel package:${NC}"
     echo "   cd /home/skipy/fast-api-skipy/"
-    echo "   python3.11 -m build"
+    echo "   python3.12 -m build"
     echo ""
     echo -e "${CYAN}2. Copy the wheel file to the server:${NC}"
     echo "   scp dist/$WHEEL_FILE_NAME root@$DEFAULT_SERVER_IP:/tmp/"
