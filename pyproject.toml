@@ -53,6 +53,7 @@ dependencies = [
     "wheel (==0.43.0)",
     "argparse (==1.4.0)",
     "pathlib (==1.0.1)",
+    "requests (>=2.32.5,<3.0.0)",
 ]
 
 [project.urls]
