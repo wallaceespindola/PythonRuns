@@ -52,7 +52,6 @@ python -m unittest discover -s tests
 - [fines_ibama_brazil.py](sources%2Ffines_ibama_brazil.py): Environmental fines research in Brazil's government site.
 - [app_logging.py](sources/app_logging.py): the basics of logging in Python.
 
-
 ## 📝 Latest Articles, Publications and Tech-Talks
 
 - **[[Code & Coffee - Substack] Java turns 30: An Innovation Journey Through Time and Technology](https://wallaceespindola.substack.com/p/java-turns-30-an-innovation-journey)** - What 30 years of Java can teach us about building tech that lasts.

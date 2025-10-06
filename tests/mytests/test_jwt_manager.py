@@ -1,7 +1,8 @@
-import pytest
-from datetime import datetime, timedelta, timezone
-from jose import JWTError
 import time
+from datetime import datetime, timedelta, timezone
+
+import pytest
+from jose import JWTError
 
 from pythonruns.src.mytests.jwt_test import JWTManager
 
@@ -34,11 +35,7 @@ class TestJWTManager:
         custom_algo = "HS512"
         custom_expire = 60
 
-        manager = JWTManager(
-            secret_key=custom_key,
-            algorithm=custom_algo,
-            expire_minutes=custom_expire
-        )
+        manager = JWTManager(secret_key=custom_key, algorithm=custom_algo, expire_minutes=custom_expire)
 
         assert manager.secret_key == custom_key
         assert manager.algorithm == custom_algo
@@ -55,7 +52,7 @@ class TestJWTManager:
         assert len(token) > 0
 
         # Verify token has three parts (header.payload.signature)
-        assert len(token.split('.')) == 3
+        assert len(token.split(".")) == 3
 
     def test_decode_token_valid(self, jwt_manager, test_data):
         """Test decoding a valid JWT token."""
@@ -103,7 +100,7 @@ class TestJWTManager:
         token = jwt_manager.create_access_token(test_data)
 
         # Tamper with the token by modifying a character
-        tampered_token = token[:-1] + ('a' if token[-1] != 'a' else 'b')
+        tampered_token = token[:-1] + ("a" if token[-1] != "a" else "b")
 
         with pytest.raises(JWTError):
             jwt_manager.decode_token(tampered_token)
@@ -150,7 +147,7 @@ class TestJWTManager:
             "username": "testuser",
             "roles": ["admin", "user"],
             "active": True,
-            "metadata": {"key": "value"}
+            "metadata": {"key": "value"},
         }
 
         token = jwt_manager.create_access_token(complex_data)
@@ -202,6 +199,7 @@ class TestJWTManager:
         decoded = manager.decode_token(token)
 
         assert decoded["sub"] == test_data["sub"]
+
 
 if __name__ == "__main__":
     pytest.main()

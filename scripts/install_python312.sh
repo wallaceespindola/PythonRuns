@@ -64,4 +64,3 @@ echo "  cd /home/aiyrh/git/PythonRuns"
 echo "  source .venv312/bin/activate"
 echo "  pip install -r requirements.txt"
 echo ""
-

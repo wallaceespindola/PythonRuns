@@ -54,4 +54,3 @@ echo "To activate the environment in the future, run:"
 echo "  cd /home/aiyrh/git/PythonRuns"
 echo "  source $VENV_PATH/bin/activate"
 echo ""
-

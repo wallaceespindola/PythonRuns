@@ -45,7 +45,7 @@ def unlock_collection_once(collection, collection_name):
     if collection.is_locked():
         print(f"Collection '{collection_name}' is locked.")
         response = input(f"Unlock '{collection_name}'? (y/n): ").lower()
-        if response == 'y':
+        if response == "y":
             try:
                 collection.unlock()
                 print(f"Collection '{collection_name}' unlocked successfully.")
@@ -173,7 +173,7 @@ def interactive_mode():
 
     print(f"\nMigrating from '{source_label}' to '{destination_label}'")
     confirm = input("Continue? (y/n): ").lower()
-    if confirm == 'y':
+    if confirm == "y":
         migrate_items(source_label, destination_label)
     else:
         print("Migration cancelled.")
@@ -201,7 +201,7 @@ if __name__ == "__main__":
         print(f"Destination: {destination_label}\n")
 
         confirm = input("Continue with migration? (y/n): ").lower()
-        if confirm == 'y':
+        if confirm == "y":
             migrate_items(source_label, destination_label)
         else:
             print("Migration cancelled.")

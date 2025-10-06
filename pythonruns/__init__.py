@@ -12,4 +12,3 @@ __email__ = "wallace.espindola@gmail.com"
 from .hello_world import say_hello
 
 __all__ = ["say_hello"]
-

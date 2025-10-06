@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import argparse
-import subprocess
 import shutil
-from pathlib import Path
+import subprocess
 import sys
+from pathlib import Path
 
 
 def run_command(cmd, cwd=None):
@@ -50,12 +50,12 @@ def main(project_folder=None):
     root = Path.home() / "git"
     proj = root / project_folder
     backup = root / f"{project_folder}-copy"
-    exclude = {'.git', '.idea'}
+    exclude = {".git", ".idea"}
 
     if not proj.exists() or not proj.is_dir():
         print(f"Project folder '{project_folder}' not found.")
         sys.exit(1)
-    if not (proj / '.git').exists():
+    if not (proj / ".git").exists():
         print(f"'{project_folder}' is not a git repository.")
         sys.exit(1)
 
@@ -68,7 +68,7 @@ def main(project_folder=None):
         print("Could not get git log.")
         shutil.rmtree(backup)
         sys.exit(1)
-    first_commit = log.strip().split('\n')[0].split()[0]
+    first_commit = log.strip().split("\n")[0].split()[0]
     ok, out = run_command(["git", "reset", "--hard", first_commit], cwd=proj)
     if not ok:
         print(f"Git reset failed: {out}")

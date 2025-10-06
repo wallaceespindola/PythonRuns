@@ -37,4 +37,3 @@ git commit --allow-empty -m "$MSG"
 git push origin "$BRANCH"
 
 echo "[$(date)] Commit and push in $REPO on branch $BRANCH."
-

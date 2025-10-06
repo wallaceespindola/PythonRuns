@@ -1,6 +1,5 @@
 import os
 import zipfile
-
 from pathlib import Path
 
 # Define project root
@@ -9,6 +8,7 @@ project_root = Path("fastapi_article_project")
 # Safety cleanup: remove any old project
 if project_root.exists():
     import shutil
+
     shutil.rmtree(project_root)
 
 # Recreate directories
