@@ -8,7 +8,6 @@ on:
     branches:
       - main
       - develop
-  workflow_dispatch: true
 jobs:
   test:
     name: Test on Python ${{ matrix.python-version }}
