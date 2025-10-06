@@ -36,7 +36,7 @@ class JWTManager:
 
         :param token: JWT token to decode
         :return: Dictionary containing the decoded payload
-        :raises JWTError: If token is invalid or expired
+        :raises JWTError: If the token is invalid or expired
         """
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
