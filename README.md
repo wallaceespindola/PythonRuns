@@ -5,6 +5,7 @@
 ![Apache 2.0 License](https://img.shields.io/badge/License-Apache2.0-orange)
 ![Python](https://img.shields.io/badge/Built_with-Python-blue)
 ![Pytest](https://img.shields.io/badge/Powered_by-Pytest-green)
+[![CI](https://github.com/wallaceespindola/PythonRuns/actions/workflows/ci.yml/badge.svg)](https://github.com/wallaceespindola/PythonRuns/actions/workflows/ci.yml)
 
 Tests on Python Code Examples.
 
