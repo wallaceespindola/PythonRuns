@@ -85,16 +85,19 @@ make clean
 ## Updating Dependencies
 
 ### Adding a new dependency:
+
 1. Edit `pyproject.toml` and add to `dependencies` list
 2. Run: `uv lock`
 3. Run: `uv sync`
 
 ### Updating a specific package:
+
 1. Edit version in `pyproject.toml`
 2. Run: `uv lock`
 3. Run: `uv sync`
 
 ### Updating all packages:
+
 ```bash
 uv lock --upgrade
 uv sync
@@ -120,12 +123,14 @@ make build
 ## Troubleshooting
 
 ### Clear cache
+
 ```bash
 rm -rf .uv/
 uv cache clean
 ```
 
 ### Regenerate lockfile
+
 ```bash
 rm uv.lock
 uv lock
@@ -133,11 +138,13 @@ uv sync
 ```
 
 ### Force reinstall
+
 ```bash
 uv sync --reinstall
 ```
 
 ### Check for outdated packages
+
 ```bash
 uv lock --upgrade --dry-run
 ```
@@ -168,15 +175,15 @@ uv pip compile pyproject.toml -o requirements.txt
 
 ## Comparison with Poetry
 
-| Poetry Command | uv Equivalent |
-|---------------|---------------|
-| `poetry install` | `uv sync` |
+| Poetry Command       | uv Equivalent                               |
+| -------------------- | ------------------------------------------- |
+| `poetry install`     | `uv sync`                                   |
 | `poetry add package` | Edit pyproject.toml + `uv lock` + `uv sync` |
-| `poetry update` | `uv lock --upgrade` + `uv sync` |
-| `poetry run cmd` | `uv run cmd` |
-| `poetry shell` | `source .venv/bin/activate` |
-| `poetry export` | `uv pip compile pyproject.toml` |
-| `poetry lock` | `uv lock` |
+| `poetry update`      | `uv lock --upgrade` + `uv sync`             |
+| `poetry run cmd`     | `uv run cmd`                                |
+| `poetry shell`       | `source .venv/bin/activate`                 |
+| `poetry export`      | `uv pip compile pyproject.toml`             |
+| `poetry lock`        | `uv lock`                                   |
 
 ## Links
 

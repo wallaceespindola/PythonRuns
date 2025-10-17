@@ -65,6 +65,7 @@ Use this checklist to verify the migration from Poetry to uv was successful.
 ## 🔧 Common Issues
 
 ### If uv is not installed:
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 # or
@@ -72,6 +73,7 @@ pip install uv
 ```
 
 ### If dependencies don't resolve:
+
 ```bash
 rm uv.lock
 uv lock
@@ -79,17 +81,20 @@ uv sync
 ```
 
 ### If CI fails:
+
 - Check GitHub Actions logs
 - Verify `astral-sh/setup-uv@v5` is used
 - Ensure `uv sync` is used instead of pip install
 
 ### If old .venv causes issues:
+
 ```bash
 rm -rf .venv
 uv sync
 ```
 
 ### Need requirements.txt for a legacy tool:
+
 ```bash
 # Generate from pyproject.toml
 uv pip compile pyproject.toml -o requirements.txt
@@ -114,6 +119,7 @@ Once all items are checked, the migration is complete and verified.
 ---
 
 For questions or issues, refer to:
+
 - MIGRATION_SUMMARY.md - Detailed migration documentation
 - UV_QUICK_REFERENCE.md - Command reference
 - https://docs.astral.sh/uv/ - Official uv documentation
