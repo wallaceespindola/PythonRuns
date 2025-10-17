@@ -68,10 +68,10 @@ json5==0.12.1
 jsonpointer==3.0.0
 jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
-jupyter-events==0.12.0
-jupyter-lsp==2.3.0
 jupyter_client==8.6.3
 jupyter_core==5.9.1
+jupyter-events==0.12.0
+jupyter-lsp==2.3.0
 jupyter_server==2.17.0
 jupyter_server_terminals==0.5.3
 jupyterlab==4.2.3
@@ -151,8 +151,6 @@ python-docx==1.2.0
 python-dotenv==1.0.1
 python-jose==3.5.0
 python-json-logger==4.0.0
-python-runs==0.1.0
-pythonruns==0.1.0
 pytz==2025.2
 PyYAML==6.0.3
 pyzmq==27.1.0
