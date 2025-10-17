@@ -25,7 +25,7 @@ dependencies = [
     "jupyterlab (==4.2.3)",
     "lxml (==5.2.2)",
     "matplotlib (==3.9.0)",
-    "mediapipe (>=0.10.0)",
+    "mediapipe (>=0.10.20,<0.11.0)",
     "mock (==5.1.0)",
     "numpy (>=1.26.0,<2.0.0)",
     "opencv-contrib-python (==4.11.0.86)",
@@ -53,11 +53,12 @@ dependencies = [
     "sounddevice (==0.5.2)",
     "sqlite4 (==0.1.1)",
     "tqdm (==4.66.4)",
-    "twine (==5.1.0)",
+    "twine (==6.2.0)",
     "unittest-xml-reporting (==3.2.0)",
     "urllib3 (==2.2.2)",
     "wheel (==0.43.0)",
     "toml (>=0.10.2,<0.11.0)",
+    "poetry-plugin-export (>=1.9.0,<2.0.0)",
 ]
 
 [project.urls]
