@@ -28,13 +28,10 @@ $Package           = Get-OrDefault 'PACKAGE'           'PythonRuns'
 $IndexUrl          = Get-OrDefault 'INDEX_URL'         'https://nexus.myrepo.net/repository/pypi-releases/simple'
 $ExtraIndexUrl     = Get-OrDefault 'EXTRA_INDEX_URL'   'https://pypi.org/simple'
 $RepositoryUpload  = Get-OrDefault 'REPOSITORY_UPLOAD' 'https://nexus.myrepo.net/repository/pypi-releases/'
-$RequirementsMain  = Get-OrDefault 'REQUIREMENTS_MAIN' 'requirements.txt'
-$RequirementsDev   = Get-OrDefault 'REQUIREMENTS_DEV'  'dev_requirements.txt'
-# Prefer module-invocation for pip/twine/build for better reliability on Windows:
-$PipCmd            = "$Python -m pip"
+$Uv                = Get-OrDefault 'UV'                'uv'
 
-# Pip flags (DRY)
-$PipFlags = @('--index-url', $IndexUrl, '--extra-index-url', $ExtraIndexUrl)
+# UV flags (DRY)
+$UvFlags = @('--index-url', $IndexUrl, '--extra-index-url', $ExtraIndexUrl)
 
 # -------- Colors --------
 $Cyan  = "`e[1;36m"
@@ -60,10 +57,6 @@ function Ensure-File([string]$path) {
     throw "Missing file: $path"
   }
 }
-function Ensure-Requirements {
-  Ensure-File $RequirementsMain
-  Ensure-File $RequirementsDev
-}
 function Ensure-Dist {
   if (-not (Test-Path -LiteralPath 'dist' -PathType Container)) {
     throw "No 'dist/' directory. Run 'build' first."
@@ -84,12 +77,12 @@ function Ensure-Command([string]$cmd, [string]$hint) {
 $Tasks = [ordered]@{
 
   'config' = @{
-    Description = 'Configure pip indexes (Nexus + PyPI)';
+    Description = 'Configure uv pip indexes (Nexus + PyPI)';
     Action = {
       Start-Log 'config'
-      & $PipCmd config --user set global.index-url $IndexUrl
-      & $PipCmd config --user set global.extra-index-url $ExtraIndexUrl
-      & $PipCmd config --user list
+      & $UvPipCmd config --user set global.index-url $IndexUrl
+      & $UvPipCmd config --user set global.extra-index-url $ExtraIndexUrl
+      & $UvPipCmd config --user list
       Done-Log 'config'
     }
   }
@@ -110,21 +103,34 @@ $Tasks = [ordered]@{
     }
   }
 
+  'sync' = @{
+    Description = 'Sync dependencies from uv.lock (recommended)';
+    Action = {
+      Start-Log 'sync'
+      Ensure-Command $Uv 'Install uv: https://docs.astral.sh/uv/'
+      & $Uv sync
+      Done-Log 'sync'
+    }
+  }
+
   'install' = @{
-    Description = 'Install project in editable mode with dev extras';
+    Description = 'Install project with uv (creates venv and syncs dependencies)';
     Action = {
       Start-Log 'install'
-      & $PipCmd install @PipFlags -e '.[DEV]'
+      Ensure-Command $Uv 'Install uv: https://docs.astral.sh/uv/'
+      & $Uv venv
+      & $Uv sync
       Done-Log 'install'
     }
   }
 
   'update' = @{
-    Description = 'Update dependencies from requirements files';
+    Description = 'Update dependencies and regenerate lockfile';
     Action = {
       Start-Log 'update'
-      Ensure-Requirements
-      & $PipCmd install @PipFlags -r $RequirementsDev -r $RequirementsMain
+      Ensure-Command $Uv 'Install uv: https://docs.astral.sh/uv/'
+      & $Uv lock --upgrade
+      & $Uv sync
       Done-Log 'update'
     }
   }

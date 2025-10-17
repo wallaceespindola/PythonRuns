@@ -17,9 +17,7 @@ PACKAGE           ?= PythonRuns
 INDEX_URL         ?= https://nexus.myrepo.net/repository/pypi-releases/simple
 EXTRA_INDEX_URL   ?= https://pypi.org/simple
 REPOSITORY_UPLOAD ?= https://nexus.myrepo.net/repository/pypi-releases/
-REQUIREMENTS_MAIN ?= requirements.txt
-REQUIREMENTS_DEV  ?= dev_requirements.txt
-PIP_FLAGS         := --index-url $(INDEX_URL) --extra-index-url $(EXTRA_INDEX_URL)
+UV_FLAGS          := --index-url $(INDEX_URL) --extra-index-url $(EXTRA_INDEX_URL)
 
 # ---- Colors ----
 C_CYAN  := \033[1;36m
@@ -34,13 +32,12 @@ define log_done
 	@printf "$(C_GREEN)✓ Done %s in %ss$(C_RST)\n" "$(1)" "$$SECONDS"
 endef
 
-.PHONY: install config update test test-coverage run pre-commit build deploy version help list clean \
-        guard-reqs check-dist twine-check check-tools check-pytest check-precommit check-twine check-build
+.PHONY: sync install config update test test-coverage run pre-commit build deploy version help list clean \
+        check-dist twine-check check-tools check-pytest check-precommit check-twine check-build check-uv
 
 # ---- Guard checks ----
-guard-reqs: ## Ensure requirements files exist
-	@test -f "$(REQUIREMENTS_MAIN)" || { echo "Missing $(REQUIREMENTS_MAIN)"; exit 1; }
-	@test -f "$(REQUIREMENTS_DEV)"  || { echo "Missing $(REQUIREMENTS_DEV)"; exit 1; }
+check-uv:
+	@command -v uv >/dev/null || { echo "uv not found. Install: curl -LsSf https://astral.sh/uv/install.sh | sh"; exit 1; }
 
 check-dist: ## Ensure ./dist exists and contains artifacts
 	$(call log_start,$@)
@@ -55,13 +52,13 @@ twine-check: check-dist check-twine ## Validate built artifacts (sdist/wheel) wi
 
 # ---- Target-specific tool checks ----
 check-pytest:
-	@command -v pytest >/dev/null || { echo "pytest not found. pip install pytest"; exit 1; }
+	@command -v pytest >/dev/null || { echo "pytest not found. Run 'uv sync --all-groups' or 'make sync'"; exit 1; }
 check-precommit:
-	@command -v pre-commit >/dev/null || { echo "pre-commit not found. pip install pre-commit"; exit 1; }
+	@command -v pre-commit >/dev/null || { echo "pre-commit not found. Run 'uv sync --all-groups'"; exit 1; }
 check-twine:
-	@command -v twine >/dev/null || { echo "twine not found. pip install twine"; exit 1; }
+	@command -v twine >/dev/null || { echo "twine not found. Run 'uv pip install --system twine'"; exit 1; }
 check-build:
-	@$(PYTHON) -c "import build" 2>/dev/null || { echo "build module not found. pip install build"; exit 1; }
+	@$(PYTHON) -c "import build" 2>/dev/null || { echo "build module not found. Run 'uv pip install --system build'"; exit 1; }
 
 # Optional: quick all-in-one diagnostic
 check-tools: ## Check common CLI tools are available
@@ -76,7 +73,7 @@ check-tools: ## Check common CLI tools are available
 	$(call log_done,$@)
 
 # ---- Targets ----
-config: ## Configure pip indexes (Nexus + PyPI)
+config: ## Configure pip indexes (optional, for legacy pip usage)
 	$(call log_start,$@)
 	pip config --user set global.index-url $(INDEX_URL)
 	pip config --user set global.extra-index-url $(EXTRA_INDEX_URL)
@@ -90,14 +87,21 @@ clean: ## Remove build/test artifacts
 	find . -type d -name "*.egg-info" -exec rm -rf {} \;
 	$(call log_done,$@)
 
-install: config ## Install project in editable mode with dev extras
+sync: check-uv ## Sync dependencies from uv.lock (recommended)
 	$(call log_start,$@)
-	pip install $(PIP_FLAGS) -e '.[DEV]'
+	uv sync
 	$(call log_done,$@)
 
-update: config guard-reqs ## Update dependencies from requirements files
+install: check-uv ## Install project with uv (creates venv and syncs dependencies)
 	$(call log_start,$@)
-	pip install $(PIP_FLAGS) -r "$(REQUIREMENTS_DEV)" -r "$(REQUIREMENTS_MAIN)"
+	uv venv || true
+	uv sync
+	$(call log_done,$@)
+
+update: check-uv ## Update dependencies and regenerate lockfile
+	$(call log_start,$@)
+	uv lock --upgrade
+	uv sync
 	$(call log_done,$@)
 
 test: check-pytest ## Run tests (verbose)

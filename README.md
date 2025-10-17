@@ -11,17 +11,77 @@ Tests on Python Code Examples.
 
 ## Installation
 
-Install and activate the virtual environment:
+This project uses [uv](https://docs.astral.sh/uv/) for fast and reliable Python package management.
+
+### Installing uv
+
+If you don't have uv installed yet:
 
 ```sh
-python3 -m virtualenv .venv
-source .venv/bin/activate
+# On macOS and Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# On Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Or with pip
+pip install uv
 ```
 
-Install the necessary dependencies:
+### Setting up the project
+
+Create and activate a virtual environment, then install dependencies:
 
 ```sh
-pip install -r requirements.txt
+# Create a virtual environment and install dependencies (one step)
+uv sync
+
+# Or manually:
+# 1. Create a virtual environment
+uv venv
+
+# 2. Activate it
+# On Linux/macOS:
+source .venv/bin/activate
+# On Windows:
+# .venv\Scripts\activate
+
+# 3. Sync all dependencies
+uv sync
+```
+
+Alternatively, you can use the provided makefile:
+
+```sh
+make install
+```
+
+### Working with uv
+
+Common uv commands:
+
+```sh
+# Sync dependencies from uv.lock (recommended for consistent environments)
+uv sync
+
+# Sync with all dependency groups (including dev)
+uv sync --all-groups
+
+# Update dependencies and regenerate lockfile
+uv lock --upgrade
+uv sync
+
+# Add a new dependency
+# (Edit pyproject.toml, then run:)
+uv lock
+uv sync
+
+# Run a command in the virtual environment
+uv run python -m pythonruns
+uv run pytest
+
+# Use pip if needed for one-off packages (not recommended for project deps)
+uv pip install package-name
 ```
 
 ## How to Run

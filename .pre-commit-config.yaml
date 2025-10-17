@@ -37,8 +37,7 @@ repos:
         exclude: ^tests/.*__.*\.py$ # Exclude non-test files containing "__" from the check rules
       - id: no-commit-to-branch # Prevents committing to specified branches (e.g.: main, master)
         args: ["--branch", "master"]
-      - id: requirements-txt-fixer # Ensures requirements.txt files are formatted correctly
-        files: "requirements.txt"
+      # Note: requirements-txt-fixer removed since we use uv with pyproject.toml + uv.lock
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.35.1
