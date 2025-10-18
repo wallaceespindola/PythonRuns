@@ -14,7 +14,8 @@ version:
 # ---- Configurable variables ----
 PYTHON            ?= python3
 PACKAGE           ?= PythonRuns
-INDEX_URL         ?= https://nexus.myrepo.net/repository/pypi-releases/simple
+#INDEX_URL        ?= https://nexus.myrepo.net/repository/pypi-releases/simple # when using private repo (e.g., Nexus)
+INDEX_URL         ?= https://pypi.org/simple
 EXTRA_INDEX_URL   ?= https://pypi.org/simple
 REPOSITORY_UPLOAD ?= https://nexus.myrepo.net/repository/pypi-releases/
 UV_FLAGS          := --index-url $(INDEX_URL) --extra-index-url $(EXTRA_INDEX_URL)
@@ -33,7 +34,8 @@ define log_done
 endef
 
 .PHONY: sync install config update test test-coverage run pre-commit build deploy version help list clean \
-        check-dist twine-check check-tools check-pytest check-precommit check-twine check-build check-uv
+        check-dist twine-check check-tools check-pytest check-precommit check-twine check-build check-uv \
+        requirements requirements-clean
 
 # ---- Guard checks ----
 check-uv:
@@ -102,6 +104,17 @@ update: check-uv ## Update dependencies and regenerate lockfile
 	$(call log_start,$@)
 	uv lock --upgrade
 	uv sync
+	$(call log_done,$@)
+
+requirements: check-uv ## Export requirements.txt from pyproject.toml
+	$(call log_start,$@)
+	uv pip compile pyproject.toml -o requirements.txt $(UV_FLAGS)
+	$(call log_done,$@)
+
+requirements-clean: ## Delete requirements.txt
+	$(call log_start,$@)
+	rm -f requirements.txt
+	@echo "requirements.txt deleted"
 	$(call log_done,$@)
 
 test: check-pytest ## Run tests (verbose)
