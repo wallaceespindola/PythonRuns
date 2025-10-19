@@ -99,8 +99,16 @@ class TestJWTManager:
         """Test decoding a tampered JWT token."""
         token = jwt_manager.create_access_token(test_data)
 
-        # Tamper with the token by modifying a character
-        tampered_token = token[:-1] + ("a" if token[-1] != "a" else "b")
+        # Tamper with the token by modifying the signature (last part)
+        # Split token into parts and modify the signature more significantly
+        parts = token.split(".")
+        # Change multiple characters in the signature to ensure it's invalid
+        signature = parts[2]
+        if len(signature) > 5:
+            tampered_signature = "TAMPERED" + signature[8:]
+        else:
+            tampered_signature = "TAMPER"
+        tampered_token = f"{parts[0]}.{parts[1]}.{tampered_signature}"
 
         with pytest.raises(JWTError):
             jwt_manager.decode_token(tampered_token)
