@@ -73,7 +73,7 @@ def scan_repos(root: Path, query: str, ignore_case: bool = False):
     for d in git_named_dirs:
         # find .git directories under this folder
         try:
-            for git_dir in d.rglob('.git'):
+            for git_dir in d.rglob(".git"):
                 try:
                     repo = git_dir.parent.resolve()
                     repos.append(repo)
@@ -125,7 +125,7 @@ def list_repos(root: Path):
     repos = set()
     for d in git_named_dirs:
         try:
-            for git_dir in d.rglob('.git'):
+            for git_dir in d.rglob(".git"):
                 try:
                     repos.add(git_dir.parent.resolve())
                 except Exception:
@@ -147,7 +147,9 @@ def list_repos(root: Path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Scan git repos for a string in commit logs. This script limits scan to folders whose name contains 'git' under the given root.")
+    parser = argparse.ArgumentParser(
+        description="Scan git repos for a string in commit logs. This script limits scan to folders whose name contains 'git' under the given root."
+    )
     parser.add_argument("-q", "--query", help="String to search in git logs")
     parser.add_argument("-i", "--ignore-case", action="store_true", help="Case-insensitive search")
     parser.add_argument("-d", "--dir", type=str, default="~", help="Root directory containing repos (defaults to home)")
@@ -178,5 +180,3 @@ if __name__ == "__main__":
 # Other example queries:
 # $ ~/git/PythonRuns/scripts/git_scan.py -q "user" -i
 # $ ~/git/PythonRuns/scripts/git_scan.py -q "@company" -i
-
-
