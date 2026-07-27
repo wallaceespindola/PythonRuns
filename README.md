@@ -89,7 +89,7 @@ uv pip install package-name
 To run some function:
 
 ```sh
-python3 -m sources.file_to_run
+python3 -m pythonruns.src.mytests.file_to_run
 ```
 
 To run all the tests in directory 'tests':
@@ -100,18 +100,18 @@ python -m unittest discover -s tests
 
 ## Examples
 
-- [calculate_power.py](sources%2Fcalculate_power.py): calculate a power x^y of a number.
-- [camel_2_snake_case.py](sources%2Fcamel_2_snake_case.py): converts a file text content from camel case to snake case.
-- [convert_pdf_to_docx.py](sources%2Fconvert_pdf_to_docx.py): converts a pdf file to a docx file.
-- [float_format.py](sources%2Ffloat_format.py): tests and prints multiple float formats.
-- [happy_teacher_day.py](sources%2Fhappy_teacher_day.py): prints a heart in the console with the word Teachers, for happy teachers day.
-- [I_love_you.py](sources%2FI_love_you.py): prints a heart in the console with a given 8-character word.
-- [remove_background.py](sources%2Fremove_background.py): removes background from images, letting only the main subject.
-- [split_script.py](sources%2Fsplit_script.py): splits a text input file (like a log) into a given number of chunks.
-- [fake_data.py](sources%2Ffake_data.py): creates fake test data using Faker.
-- [qrcode.py](sources%2Fqrcode.py): creates a QR-Code from your data.
-- [fines_ibama_brazil.py](sources%2Ffines_ibama_brazil.py): Environmental fines research in Brazil's government site.
-- [app_logging.py](sources/app_logging.py): the basics of logging in Python.
+- [calculate_power.py](pythonruns/src/mytests/calculate_power.py): calculate a power x^y of a number.
+- [camel_2_snake_case.py](pythonruns/src/mytests/camel_2_snake_case.py): converts a file text content from camel case to snake case.
+- [convert_pdf_to_docx.py](pythonruns/src/mytests/convert_pdf_to_docx.py): converts a pdf file to a docx file.
+- [float_format.py](pythonruns/src/mytests/float_format.py): tests and prints multiple float formats.
+- [happy_teacher_day.py](pythonruns/src/mytests/happy_teacher_day.py): prints a heart in the console with the word Teachers, for happy teachers day.
+- [I_love_you.py](pythonruns/src/mytests/I_love_you.py): prints a heart in the console with a given 8-character word.
+- [remove_background.py](pythonruns/src/mytests/remove_background.py): removes background from images, letting only the main subject.
+- [split_files.py](pythonruns/src/mytests/split_files.py): splits a text input file (like a log) into a given number of chunks.
+- [fake_data.py](pythonruns/src/mytests/fake_data.py): creates fake test data using Faker.
+- [qrcode/generate_qrcode.py](pythonruns/src/mytests/qrcode/generate_qrcode.py): creates a QR-Code from your data.
+- [jusbr/call_api_fines_ibama_brazil.py](pythonruns/src/mytests/jusbr/call_api_fines_ibama_brazil.py): Environmental fines research in Brazil's government site.
+- [app_logging.py](pythonruns/src/mytests/app_logging.py): the basics of logging in Python.
 
 ## 📝 Latest Articles, Publications and Tech-Talks
 
