@@ -1,73 +1,32 @@
+# Dependabot: weekly grouped minor/patch updates; majors arrive as separate PRs for review.
 version: 2
 updates:
-  # Enable version updates for pip (Python dependencies)
-  - package-ecosystem: "pip"
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "06:00"
+      timezone: "Europe/Brussels"
     open-pull-requests-limit: 10
-    reviewers:
-      - "wallaceespindola"
-    labels:
-      - "dependencies"
-      - "python"
     commit-message:
-      prefix: "deps"
-      prefix-development: "deps-dev"
-      include: "scope"
-    # Group all patch updates together
+      prefix: "chore(deps)"
     groups:
-      patch-updates:
-        patterns:
-          - "*"
-        update-types:
-          - "patch"
-      minor-updates:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-    # Ignore specific packages if needed
-    ignore:
-      - dependency-name: "numpy"
-        update-types: ["version-update:semver-major"]
-  # Enable version updates for GitHub Actions
+      uv-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "06:00"
-    open-pull-requests-limit: 5
-    reviewers:
-      - "wallaceespindola"
-    labels:
-      - "dependencies"
-      - "github-actions"
+      timezone: "Europe/Brussels"
+    open-pull-requests-limit: 10
     commit-message:
-      prefix: "ci"
-      include: "scope"
+      prefix: "chore(ci)"
     groups:
-      github-actions:
-        patterns:
-          - "*"
-  # Enable version updates for pre-commit hooks
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:00"
-    open-pull-requests-limit: 5
-    allow:
-      - dependency-type: "development"
-    reviewers:
-      - "wallaceespindola"
-    labels:
-      - "dependencies"
-      - "pre-commit"
-    commit-message:
-      prefix: "deps-dev"
-      include: "scope"
+      github_actions-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
