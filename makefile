@@ -8,12 +8,9 @@ SHELL := bash
 .DELETE_ON_ERROR:
 
 
-version:
-
-
 # ---- Configurable variables ----
 PYTHON            ?= python3
-PACKAGE           ?= PythonRuns
+PACKAGE           ?= pythonruns
 #INDEX_URL        ?= https://nexus.myrepo.net/repository/pypi-releases/simple # when using private repo (e.g., Nexus)
 INDEX_URL         ?= https://pypi.org/simple
 EXTRA_INDEX_URL   ?= https://pypi.org/simple
@@ -127,9 +124,9 @@ test-coverage: check-pytest ## Run tests with coverage; HTML at ./report.html
 	pytest --cov=$(PACKAGE) --verbose --html=report.html --self-contained-html
 	$(call log_done,$@)
 
-run: ## Run the package as a module
+run: ## Run the hello-world example module
 	$(call log_start,$@)
-	$(PYTHON) -m $(PACKAGE)
+	uv run python -m $(PACKAGE).hello_world
 	$(call log_done,$@)
 
 pre-commit: check-precommit ## Run all pre-commit hooks
@@ -149,7 +146,7 @@ deploy: twine-check ## Upload ./dist to Nexus (uses TWINE_* env vars)
 
 version: ## Show package version
 	$(call log_start,$@)
-	$(PACKAGE) -v
+	uv version --short
 	$(call log_done,$@)
 
 help: ## List available commands (default)
