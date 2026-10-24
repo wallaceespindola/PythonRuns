@@ -1,95 +1,90 @@
 import os
+import posixpath
+import shlex
 import subprocess
 
 import paramiko
-from paramiko import SFTPClient
 
+# Credentials and hosts come from the environment (see .env.example); nothing secret is hardcoded.
 # LOCAL server configs
-LOCAL_WP_PATH = r"C:\Users\Edu\Local Sites"
-LOCAL_DB_NAME = "local"
-LOCAL_DB_USER = "user"
-LOCAL_DB_PASSWORD = "password"
+LOCAL_WP_PATH = os.getenv("WP_LOCAL_PATH", r"C:\Users\Edu\Local Sites")
+LOCAL_DB_NAME = os.getenv("WP_LOCAL_DB_NAME", "local")
+LOCAL_DB_USER = os.getenv("WP_LOCAL_DB_USER", "")
+LOCAL_DB_PASSWORD = os.getenv("WP_LOCAL_DB_PASSWORD", "")
 
 # REMOTE server configs
-REMOTE_SERVER = "ipaddrs"  # 'qjump.hstgr.cloud'
-REMOTE_USER = "user"
-REMOTE_PASSWORD = "pass"
-REMOTE_WP_PATH = "/var/www/site/"
-REMOTE_DB_NAME = "site"
-REMOTE_DB_USER = "aaaa"
-REMOTE_DB_PASSWORD = "aaaa123"
+REMOTE_SERVER = os.getenv("WP_REMOTE_SERVER", "")
+REMOTE_USER = os.getenv("WP_REMOTE_USER", "")
+REMOTE_PASSWORD = os.getenv("WP_REMOTE_PASSWORD", "")  # used for sudo; SSH auth prefers the key below
+REMOTE_KEY_FILE = os.path.expanduser(os.getenv("WP_REMOTE_KEY_FILE", "~/.ssh/id_ed25519"))
+REMOTE_WP_PATH = os.getenv("WP_REMOTE_PATH", "/var/www/site/")
+REMOTE_DB_NAME = os.getenv("WP_REMOTE_DB_NAME", "site")
+REMOTE_DB_USER = os.getenv("WP_REMOTE_DB_USER", "")
+REMOTE_DB_PASSWORD = os.getenv("WP_REMOTE_DB_PASSWORD", "")
+
+# Refuse SHA-1 RSA signatures ("ssh-rsa"); rsa-sha2-256/512 and ed25519/ecdsa keys still work.
+# Mitigates the paramiko SHA-1 advisory, which has no patched release.
+DISABLED_ALGORITHMS = {"pubkeys": ["ssh-rsa"], "keys": ["ssh-rsa"]}
 
 # DB dump files
 DB_DUMP_LOCAL_FILE_NAME = "backup_local.sql"
 DB_DUMP_REMOTE_FILE_NAME = "backup_remote.sql"
-DB_DUMP_LOCAL_FILE = LOCAL_WP_PATH + DB_DUMP_LOCAL_FILE_NAME
-DB_DUMP_REMOTE_FILE = REMOTE_WP_PATH + DB_DUMP_REMOTE_FILE_NAME
+DB_DUMP_LOCAL_FILE = os.path.join(LOCAL_WP_PATH, DB_DUMP_LOCAL_FILE_NAME)
+DB_DUMP_REMOTE_FILE = posixpath.join(REMOTE_WP_PATH, DB_DUMP_REMOTE_FILE_NAME)
 
 # Files archive
 FILES_ARCHIVE_LOCAL_NAME = "wp_files_local.tar.gz"
 FILES_ARCHIVE_REMOTE_NAME = "wp_files_remote.tar.gz"
-FILES_ARCHIVE_LOCAL = LOCAL_WP_PATH + FILES_ARCHIVE_LOCAL_NAME
-FILES_ARCHIVE_REMOTE = REMOTE_WP_PATH + FILES_ARCHIVE_REMOTE_NAME
+FILES_ARCHIVE_LOCAL = os.path.join(LOCAL_WP_PATH, FILES_ARCHIVE_LOCAL_NAME)
+FILES_ARCHIVE_REMOTE = posixpath.join(REMOTE_WP_PATH, FILES_ARCHIVE_REMOTE_NAME)
 
 
-def create_ssh_client(server=REMOTE_SERVER, user=REMOTE_USER, password=REMOTE_PASSWORD):
+def create_ssh_client(server=REMOTE_SERVER, user=REMOTE_USER, key_file_path=REMOTE_KEY_FILE):
+    """Connect with host-key verification against ~/.ssh/known_hosts (unknown hosts are rejected)."""
     print("SSH connecting...")
     ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.load_system_host_keys()
+    ssh.set_missing_host_key_policy(paramiko.RejectPolicy())
     try:
-        ssh.connect(server, username=user, password=password)
+        ssh.connect(
+            server,
+            username=user,
+            key_filename=key_file_path if os.path.isfile(key_file_path) else None,
+            disabled_algorithms=DISABLED_ALGORITHMS,
+        )
         print("SSH connection established.")
         return ssh
     except paramiko.AuthenticationException:
         print("Authentication failed when connecting to the remote server.")
-        return None
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return None
+    except paramiko.SSHException as e:
+        print(f"SSH error (is the host in known_hosts?): {e}")
+    except OSError as e:
+        print(f"Network error: {e}")
+    ssh.close()
+    return None
 
 
-def create_sftp_client_with_pass(server=REMOTE_SERVER, user=REMOTE_USER, password=REMOTE_PASSWORD):
-    print("SFTP connecting...")
-    try:
-        transport = paramiko.Transport((server, 22))
-        print(f"Connecting to {server} with username {user}...")
-        transport.connect(username=user, password=password)
-        sftp = SFTPClient.from_transport(transport)
-        print("SFTP connection established.")
-        return sftp, transport
-    except paramiko.AuthenticationException as e:
-        print("Authentication failed when connecting to the remote server for SFTP.")
-        print(f"Details: {e}")
-        transport.close()
-        return None, None
-    except Exception as e:
-        print(f"An error occurred during SFTP connection: {e}")
-        if transport.is_active():
-            transport.close()
-        return None, None
+def run_remote(ssh, cmd, stdin_secret=None):
+    """Run a command and wait for it; secrets go through stdin so they never appear in a process list."""
+    stdin, stdout, stderr = ssh.exec_command(cmd)
+    if stdin_secret is not None:
+        stdin.write(stdin_secret + "\n")
+        stdin.flush()
+    stdin.channel.shutdown_write()
+    status = stdout.channel.recv_exit_status()
+    if status != 0:
+        print(f"Remote command failed ({status}): {stderr.read().decode(errors='replace').strip()}")
+    return status == 0
 
 
-def create_sftp_client_with_key(server=REMOTE_SERVER, user=REMOTE_USER, key_file_path="~/.ssh/id_rsa"):
-    print("SFTP connecting...")
-    try:
-        key = paramiko.RSAKey.from_private_key_file(os.path.expanduser(key_file_path))
-        transport = paramiko.Transport((server, 22))
-        print(f"Connecting to {server} with username {user} using SSH key...")
-        transport.connect(username=user, pkey=key)
-        sftp = SFTPClient.from_transport(transport)
-        print("SFTP connection established.")
-        return sftp, transport
-    except paramiko.AuthenticationException as e:
-        print("Authentication failed when connecting to the remote server for SFTP.")
-        print(f"Details: {e}")
-        if transport.is_active():
-            transport.close()
-        return None, None
-    except Exception as e:
-        print(f"An error occurred during SFTP connection: {e}")
-        if transport.is_active():
-            transport.close()
-        return None, None
+def mysql_remote_cmd(tool, redirect):
+    """Build a remote mysql/mysqldump command that reads the password from stdin into MYSQL_PWD."""
+    q = shlex.quote
+    return f"read -r MYSQL_PWD && export MYSQL_PWD && {tool} -u {q(REMOTE_DB_USER)} {q(REMOTE_DB_NAME)} {redirect}"
+
+
+def local_mysql_env():
+    return {**os.environ, "MYSQL_PWD": LOCAL_DB_PASSWORD}
 
 
 def backup_remote_database():
@@ -97,21 +92,17 @@ def backup_remote_database():
     Function to backup REMOTE database
     """
     print("Starting REMOTE DB backup...")
-    dump_cmd = f"mysqldump -u {REMOTE_DB_USER} -p{REMOTE_DB_PASSWORD} {REMOTE_DB_NAME} >{DB_DUMP_REMOTE_FILE}"
-    ssh = create_ssh_client(REMOTE_SERVER, REMOTE_USER, REMOTE_PASSWORD)
+    ssh = create_ssh_client()
     if ssh is not None:
-        ssh.exec_command(dump_cmd)
-        ssh.close()
+        with ssh:
+            cmd = mysql_remote_cmd("mysqldump", f"> {shlex.quote(DB_DUMP_REMOTE_FILE)}")
+            if run_remote(ssh, cmd, REMOTE_DB_PASSWORD):
+                with ssh.open_sftp() as sftp:
+                    if file_exists(sftp, DB_DUMP_REMOTE_FILE):
+                        print(f">>> Remote DB backup file created: {DB_DUMP_REMOTE_FILE}")
+                    else:
+                        print(f">>> Remote DB backup file NOT FOUND: {DB_DUMP_REMOTE_FILE}")
         print("Finished REMOTE DB backup.")
-
-        sftp, transport = create_sftp_client_with_key(REMOTE_SERVER, REMOTE_USER)
-        if sftp is not None and transport is not None:
-            if file_exists(sftp, DB_DUMP_REMOTE_FILE):
-                print(f">>> Remote DB backup file created: {DB_DUMP_REMOTE_FILE}")
-            else:
-                print(f">>> Remote DB backup file NOT FOUND: {FILES_ARCHIVE_REMOTE}")
-            sftp.close()
-            transport.close()
 
 
 def backup_local_database():
@@ -119,8 +110,8 @@ def backup_local_database():
     Function to backup LOCAL database
     """
     print("Starting LOCAL DB backup...")
-    dump_cmd = f"mysqldump -u {LOCAL_DB_USER} -p{LOCAL_DB_PASSWORD} {LOCAL_DB_NAME} > {DB_DUMP_LOCAL_FILE}"
-    subprocess.run(dump_cmd, shell=True, check=True)
+    with open(DB_DUMP_LOCAL_FILE, "wb") as out:
+        subprocess.run(["mysqldump", "-u", LOCAL_DB_USER, LOCAL_DB_NAME], stdout=out, env=local_mysql_env(), check=True)
     print("Finished LOCAL DB backup.")
 
     # Verify if the file was created
@@ -133,21 +124,18 @@ def backup_remote_files():
     Function to backup REMOTE WordPress files
     """
     print("Starting REMOTE files backup...")
-    tar_cmd = f'tar -czvf {FILES_ARCHIVE_REMOTE_NAME} -C "{REMOTE_WP_PATH}" .'
-    ssh = create_ssh_client(REMOTE_SERVER, REMOTE_USER, REMOTE_PASSWORD)
+    q = shlex.quote
+    tar_cmd = f"tar -czf {q(FILES_ARCHIVE_REMOTE)} --exclude={q(FILES_ARCHIVE_REMOTE_NAME)} -C {q(REMOTE_WP_PATH)} ."
+    ssh = create_ssh_client()
     if ssh is not None:
-        ssh.exec_command(tar_cmd)
-        ssh.close()
+        with ssh:
+            if run_remote(ssh, tar_cmd):
+                with ssh.open_sftp() as sftp:
+                    if file_exists(sftp, FILES_ARCHIVE_REMOTE):
+                        print(f">>> Remote files archive created: {FILES_ARCHIVE_REMOTE}")
+                    else:
+                        print(f">>> Remote files archive NOT FOUND: {FILES_ARCHIVE_REMOTE}")
         print("Finished REMOTE files backup.")
-
-        sftp, transport = create_sftp_client_with_key(REMOTE_SERVER, REMOTE_USER)
-        if sftp is not None and transport is not None:
-            if file_exists(sftp, FILES_ARCHIVE_REMOTE):
-                print(f">>> Remote files archive created: {FILES_ARCHIVE_REMOTE}")
-            else:
-                print(f">>> Remote files archive NOT FOUND: {FILES_ARCHIVE_REMOTE}")
-            sftp.close()
-            transport.close()
 
 
 def backup_local_files():
@@ -155,8 +143,10 @@ def backup_local_files():
     Function to backup LOCAL WordPress files
     """
     print("Starting LOCAL files backup...")
-    tar_cmd = f'tar -czvf {FILES_ARCHIVE_LOCAL_NAME} -C "{LOCAL_WP_PATH}" .'
-    subprocess.run(tar_cmd, shell=True, check=True)
+    subprocess.run(
+        ["tar", "-czf", FILES_ARCHIVE_LOCAL, f"--exclude={FILES_ARCHIVE_LOCAL_NAME}", "-C", LOCAL_WP_PATH, "."],
+        check=True,
+    )
     print("Finished LOCAL files backup.")
 
     # Verify if the file was created
@@ -177,16 +167,12 @@ def transfer_files_local_to_remote():
     Function to transfer files to REMOTE server
     """
     print("Transferring files to REMOTE server...")
-    sftp, transport = create_sftp_client_with_key(REMOTE_SERVER, REMOTE_USER)
-    if sftp is not None and transport is not None:
-        sftp.put(DB_DUMP_LOCAL_FILE, os.path.join(REMOTE_WP_PATH, DB_DUMP_LOCAL_FILE_NAME))
-        sftp.put(FILES_ARCHIVE_LOCAL, os.path.join(REMOTE_WP_PATH, FILES_ARCHIVE_LOCAL_NAME))
-
-        sftp.close()
-        transport.close()
-        print(
-            f"Files transferred to REMOTE server: {REMOTE_WP_PATH}{DB_DUMP_LOCAL_FILE}, {REMOTE_WP_PATH}{FILES_ARCHIVE_LOCAL}"
-        )
+    ssh = create_ssh_client()
+    if ssh is not None:
+        with ssh, ssh.open_sftp() as sftp:
+            sftp.put(DB_DUMP_LOCAL_FILE, posixpath.join(REMOTE_WP_PATH, DB_DUMP_LOCAL_FILE_NAME))
+            sftp.put(FILES_ARCHIVE_LOCAL, posixpath.join(REMOTE_WP_PATH, FILES_ARCHIVE_LOCAL_NAME))
+        print(f"Files transferred to REMOTE server: {REMOTE_WP_PATH}")
 
 
 def transfer_files_remote_to_local():
@@ -194,14 +180,12 @@ def transfer_files_remote_to_local():
     Function to transfer files to LOCAL server from REMOTE server
     """
     print("Transferring files to LOCAL server...")
-    sftp, transport = create_sftp_client_with_key(REMOTE_SERVER, REMOTE_USER)
-    if sftp is not None and transport is not None:
-        sftp.get(os.path.join(LOCAL_WP_PATH, DB_DUMP_REMOTE_FILE_NAME), DB_DUMP_REMOTE_FILE)
-        sftp.get(os.path.join(LOCAL_WP_PATH, FILES_ARCHIVE_REMOTE_NAME), FILES_ARCHIVE_REMOTE)
-
-        sftp.close()
-        transport.close()
-        print(f"Files transferred to LOCAL server: {DB_DUMP_REMOTE_FILE}, {FILES_ARCHIVE_REMOTE}")
+    ssh = create_ssh_client()
+    if ssh is not None:
+        with ssh, ssh.open_sftp() as sftp:
+            sftp.get(DB_DUMP_REMOTE_FILE, os.path.join(LOCAL_WP_PATH, DB_DUMP_REMOTE_FILE_NAME))
+            sftp.get(FILES_ARCHIVE_REMOTE, os.path.join(LOCAL_WP_PATH, FILES_ARCHIVE_REMOTE_NAME))
+        print(f"Files transferred to LOCAL server: {LOCAL_WP_PATH}")
 
 
 def restore_remote_database():
@@ -209,11 +193,11 @@ def restore_remote_database():
     Function to restore database on remote server
     """
     print("Starting REMOTE DB restore...")
-    ssh = create_ssh_client(REMOTE_SERVER, REMOTE_USER, REMOTE_PASSWORD)
+    ssh = create_ssh_client()
     if ssh is not None:
-        db_restore_cmd = f"mysql -u {REMOTE_DB_USER} -p{REMOTE_DB_PASSWORD} {REMOTE_DB_NAME} < {os.path.join(REMOTE_WP_PATH, DB_DUMP_LOCAL_FILE)}"
-        ssh.exec_command(db_restore_cmd)
-        ssh.close()
+        with ssh:
+            dump = posixpath.join(REMOTE_WP_PATH, DB_DUMP_LOCAL_FILE_NAME)
+            run_remote(ssh, mysql_remote_cmd("mysql", f"< {shlex.quote(dump)}"), REMOTE_DB_PASSWORD)
         print("Finished REMOTE DB restore.")
 
 
@@ -223,10 +207,10 @@ def restore_local_database():
     """
     print("Starting LOCAL DB restore...")
     try:
-        db_restore_cmd = f"mysql -u {LOCAL_DB_USER} -p{LOCAL_DB_PASSWORD} {LOCAL_DB_NAME} < {DB_DUMP_REMOTE_FILE}"
-        subprocess.run(db_restore_cmd, shell=True, check=True)
+        with open(os.path.join(LOCAL_WP_PATH, DB_DUMP_REMOTE_FILE_NAME), "rb") as dump:
+            subprocess.run(["mysql", "-u", LOCAL_DB_USER, LOCAL_DB_NAME], stdin=dump, env=local_mysql_env(), check=True)
         print("Finished LOCAL DB restore.")
-    except Exception as e:
+    except (OSError, subprocess.CalledProcessError) as e:
         print(f"An error occurred during LOCAL DB restore: {e}")
 
 
@@ -235,11 +219,11 @@ def restore_remote_files():
     Function to restore WordPress files on REMOTE server
     """
     print("Starting REMOTE files restore...")
-    ssh = create_ssh_client(REMOTE_SERVER, REMOTE_USER, REMOTE_PASSWORD)
+    ssh = create_ssh_client()
     if ssh is not None:
-        files_restore_cmd = f"tar -xzvf {os.path.join(REMOTE_WP_PATH, FILES_ARCHIVE_LOCAL)} -C {REMOTE_WP_PATH}"
-        ssh.exec_command(files_restore_cmd)
-        ssh.close()
+        with ssh:
+            archive = posixpath.join(REMOTE_WP_PATH, FILES_ARCHIVE_LOCAL_NAME)
+            run_remote(ssh, f"tar -xzf {shlex.quote(archive)} -C {shlex.quote(REMOTE_WP_PATH)}")
         print("Finished REMOTE files restore.")
 
 
@@ -249,10 +233,10 @@ def restore_local_files():
     """
     print("Starting LOCAL files restore...")
     try:
-        files_restore_cmd = f"tar -xzvf {FILES_ARCHIVE_REMOTE} -C {LOCAL_WP_PATH}"
-        subprocess.run(files_restore_cmd, shell=True, check=True)
+        archive = os.path.join(LOCAL_WP_PATH, FILES_ARCHIVE_REMOTE_NAME)
+        subprocess.run(["tar", "-xzf", archive, "-C", LOCAL_WP_PATH], check=True)
         print("Finished LOCAL files restore.")
-    except Exception as e:
+    except (OSError, subprocess.CalledProcessError) as e:
         print(f"An error occurred during LOCAL files restore: {e}")
 
 
@@ -261,18 +245,12 @@ def restart_remote_apache():
     Function to restart Apache on REMOTE server
     """
     print("Restarting Apache on REMOTE server...")
-    ssh = create_ssh_client(REMOTE_SERVER, REMOTE_USER, REMOTE_PASSWORD)
+    ssh = create_ssh_client()
     if ssh is not None:
-        try:
-            restart_cmd = "sudo systemctl restart apache2"
-            stdin, stdout, stderr = ssh.exec_command(restart_cmd)
-            stdin.write(REMOTE_PASSWORD + "\n")  # Enter sudo password
-            stdin.flush()
-            stdout.channel.recv_exit_status()  # Wait for command to finish
-            ssh.close()
-            print("Apache restarted on REMOTE server.")
-        except Exception as e:
-            print(f"An error occurred while restarting Apache on REMOTE: {e}")
+        with ssh:
+            # -S reads the sudo password from stdin, -p '' suppresses the prompt
+            if run_remote(ssh, "sudo -S -p '' systemctl restart apache2", REMOTE_PASSWORD):
+                print("Apache restarted on REMOTE server.")
 
 
 def restart_local_apache():
@@ -281,10 +259,9 @@ def restart_local_apache():
     """
     print("Restarting Apache on LOCAL server...")
     try:
-        restart_cmd = "systemctl restart apache2"
-        subprocess.run(restart_cmd, shell=True, check=True)
+        subprocess.run(["systemctl", "restart", "apache2"], check=True)
         print("Apache restarted on LOCAL server.")
-    except Exception as e:
+    except (OSError, subprocess.CalledProcessError) as e:
         print(f"An error occurred while restarting Apache on LOCAL: {e}")
 
 
@@ -363,7 +340,7 @@ def check_site_list_live():
         "https://skipy.online/wp-admin/",
         "https://skipy.online/wp-login.php",
     ]
-    for url in urls:  # Corrected the syntax error
+    for url in urls:
         check_site_live(url)
 
 
@@ -379,8 +356,4 @@ if __name__ == "__main__":
     # transfer_files_remote_to_local()
     # check_site_live()
     # check_site_list_live()
-    # create_ssh_client()
-    # create_sftp_client()
-
-    # create_sftp_client_with_key()
     print("========== Process completed successfully ==========")

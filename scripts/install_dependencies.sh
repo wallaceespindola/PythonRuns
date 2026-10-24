@@ -39,7 +39,7 @@ echo ""
 echo "[Step 4/4] Verifying key packages are installed..."
 echo ""
 echo "Checking installed packages:"
-pip list | grep -E "(numpy|jax|mediapipe|python-jose|pytest)" || echo "Some packages may not be installed yet"
+pip list | grep -E "(numpy|pyjwt|pillow|pytest)" || echo "Some packages may not be installed yet"
 
 echo ""
 echo "=== Testing JWT module ==="

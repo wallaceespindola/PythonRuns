@@ -1,6 +1,13 @@
 import json
+import os
+import sys
 
 import requests
+
+# Public key published by CNJ at https://datajud-wiki.cnj.jus.br/api-publica/acesso (rotates occasionally).
+api_key = os.environ.get("DATAJUD_API_KEY")
+if not api_key:
+    sys.exit("Set DATAJUD_API_KEY (see .env.example) to call the DataJud public API.")
 
 print("####### Calling public TRF API by Class/Org and showing output in the console...")
 
@@ -20,12 +27,11 @@ payload = json.dumps(
 )
 
 headers = {
-    "Authorization": "ApiKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==",
-    # 'Authorization': 'APIKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==',
+    "Authorization": f"APIKey {api_key}",
     "Content-Type": "application/json",
 }
 
-response = requests.request("POST", url, headers=headers, data=payload).json()
+response = requests.request("POST", url, headers=headers, data=payload, timeout=30).json()
 
 # Pretty print the JSON response
 pretty_json = json.dumps(response, indent=4)

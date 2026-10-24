@@ -1,6 +1,13 @@
 import json
+import os
+import sys
 
 import requests
+
+# Public key published by CNJ at https://datajud-wiki.cnj.jus.br/api-publica/acesso (rotates occasionally).
+api_key = os.environ.get("DATAJUD_API_KEY")
+if not api_key:
+    sys.exit("Set DATAJUD_API_KEY (see .env.example) to call the DataJud public API.")
 
 
 def query_cnj_api(process_number):
@@ -13,11 +20,11 @@ def query_cnj_api(process_number):
     url = "https://api-publica.datajud.cnj.jus.br/api_publica_tjmg/_search"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "APIKey cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==",
+        "Authorization": f"APIKey {api_key}",
     }
     json_data = {"query": {"match": {"numeroProcesso": process_number}}}
 
-    response = requests.post(url, json=json_data, headers=headers)
+    response = requests.post(url, json=json_data, headers=headers, timeout=30)
     return response.json()
 
 

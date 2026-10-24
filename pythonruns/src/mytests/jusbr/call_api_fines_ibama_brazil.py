@@ -1,13 +1,9 @@
-# REFERENCE URL: 'http://dadosabertos.ibama.gov.br/dados/SICAFI/AC/Quantidade/multasDistribuidasBensTutelados.json'
+# REFERENCE URL: 'https://dadosabertos.ibama.gov.br/dados/SICAFI/AC/Quantidade/multasDistribuidasBensTutelados.json'
 
 import locale
 
 import pandas as pd
 import requests
-import urllib3
-
-# Disable SSL warnings
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Locale PT BR - R$
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
@@ -64,8 +60,8 @@ def main():
     print(f"\n### Fetching data for: {state} - {state_name}...")
 
     response = requests.get(
-        f"http://dadosabertos.ibama.gov.br/dados/SICAFI/{state}/Quantidade/multasDistribuidasBensTutelados.json",
-        verify=False,  # No SSL verification
+        f"https://dadosabertos.ibama.gov.br/dados/SICAFI/{state}/Quantidade/multasDistribuidasBensTutelados.json",
+        timeout=30,
     )
 
     if response.status_code == 200:
