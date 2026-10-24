@@ -9,7 +9,7 @@ class TestExamples(unittest.TestCase):
         """
         print("\n1) os.sep: " + os.sep)  # Outputs the path separator character
         print(os.sep + "test1")
-        print(str("test2").join(os.sep))  # do not join the string, ignores test2
+        print("test2".join(os.sep))  # do not join the string, ignores test2
         print(os.sep.join("test3"))
 
         print("\n2) os.path.sep: " + os.path.sep)  # Outputs the same path separator character

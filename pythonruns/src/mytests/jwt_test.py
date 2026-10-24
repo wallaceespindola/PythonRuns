@@ -1,20 +1,23 @@
-from datetime import datetime, timedelta, timezone
+import os
+import secrets
+from datetime import UTC, datetime, timedelta
 
-from jose import JWTError, jwt
+import jwt
+from jwt import PyJWTError as JWTError
 
 
 class JWTManager:
     """Manager class for creating and handling JWT tokens."""
 
-    def __init__(self, secret_key: str = "supersecretkey", algorithm: str = "HS256", expire_minutes: int = 30):
+    def __init__(self, secret_key: str | None = None, algorithm: str = "HS256", expire_minutes: int = 30):
         """
         Initialize JWT Manager.
 
-        :param secret_key: Secret key for encoding JWT
+        :param secret_key: Secret key for encoding JWT (defaults to $JWT_SECRET_KEY, else a random 64-byte key)
         :param algorithm: Algorithm to use for JWT encoding
         :param expire_minutes: Token expiration time in minutes
         """
-        self.secret_key = secret_key
+        self.secret_key = secret_key or os.getenv("JWT_SECRET_KEY") or secrets.token_urlsafe(64)
         self.algorithm = algorithm
         self.expire_minutes = expire_minutes
 
@@ -26,7 +29,7 @@ class JWTManager:
         :return: Encoded JWT token as string
         """
         to_encode = data.copy()
-        expire = datetime.now(timezone.utc) + timedelta(minutes=self.expire_minutes)
+        expire = datetime.now(UTC) + timedelta(minutes=self.expire_minutes)
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return encoded_jwt
@@ -43,7 +46,7 @@ class JWTManager:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             return payload
         except JWTError as e:
-            raise JWTError(f"Token validation failed: {str(e)}")
+            raise JWTError(f"Token validation failed: {e!s}")
 
 
 if __name__ == "__main__":

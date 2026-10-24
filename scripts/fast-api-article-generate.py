@@ -44,7 +44,7 @@ dependencies = [
     "pydantic>=2.9.0",
     "sqlmodel>=0.0.22",
     "httpx>=0.27.0",
-    "python-jose>=3.3.0"
+    "pyjwt>=2.10.1"
 ]
 
 [project.optional-dependencies]
@@ -53,7 +53,6 @@ dev = [
     "mypy>=1.10.0",
     "ruff>=0.6.0",
     "pre-commit>=3.7.0",
-    "types-python-jose>=3.3.4.9"
 ]
 
 [tool.ruff]

@@ -1,8 +1,8 @@
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
-from jose import JWTError
+from jwt import PyJWTError as JWTError
 
 from pythonruns.src.mytests.jwt_test import JWTManager
 
@@ -25,7 +25,8 @@ class TestJWTManager:
     def test_init_default_values(self):
         """Test JWTManager initialization with default values."""
         manager = JWTManager()
-        assert manager.secret_key == "supersecretkey"
+        assert len(manager.secret_key) >= 64
+        assert manager.secret_key != JWTManager().secret_key
         assert manager.algorithm == "HS256"
         assert manager.expire_minutes == 30
 
@@ -75,8 +76,8 @@ class TestJWTManager:
         exp_timestamp = decoded["exp"]
 
         # Convert to datetime
-        exp_datetime = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
-        now = datetime.now(timezone.utc)
+        exp_datetime = datetime.fromtimestamp(exp_timestamp, tz=UTC)
+        now = datetime.now(UTC)
 
         # Verify expiration is in the future
         assert exp_datetime > now
@@ -118,7 +119,7 @@ class TestJWTManager:
         token = jwt_manager.create_access_token(test_data)
 
         # Create a new manager with different secret
-        wrong_manager = JWTManager(secret_key="wrongsecret")
+        wrong_manager = JWTManager(secret_key="wrongsecret" * 8)
 
         with pytest.raises(JWTError):
             wrong_manager.decode_token(token)
@@ -192,8 +193,8 @@ class TestJWTManager:
         token = short_lived_manager.create_access_token(test_data)
         decoded = short_lived_manager.decode_token(token)
 
-        exp_datetime = datetime.fromtimestamp(decoded["exp"], tz=timezone.utc)
-        now = datetime.now(timezone.utc)
+        exp_datetime = datetime.fromtimestamp(decoded["exp"], tz=UTC)
+        now = datetime.now(UTC)
         expected_exp = now + timedelta(minutes=5)
 
         time_diff = abs((exp_datetime - expected_exp).total_seconds())

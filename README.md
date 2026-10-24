@@ -94,7 +94,7 @@ All examples live in [`pythonruns/src/mytests/`](pythonruns/src/mytests).
   [call_api_trf_classe_orgao.py](pythonruns/src/mytests/jusbr/call_api_trf_classe_orgao.py): queries against the CNJ
   DataJud public API (by process number, or by class/court body).
 - [jwt_test.py](pythonruns/src/mytests/jwt_test.py): `JWTManager` class to create and decode JWT tokens with
-  `python-jose`.
+  `PyJWT`.
 - [backup_restore_wordpress.py](pythonruns/src/mytests/backup_restore_wordpress.py): backup/restore of a WordPress
   site (database and files) between a local machine and a remote server over SSH/SFTP with `paramiko`.
 
@@ -111,7 +111,7 @@ app monitoring) that are not part of the package.
 
 - Python 3.11 / 3.12 (`requires-python = ">=3.11,<3.13"`), managed with [uv](https://docs.astral.sh/uv/)
 - pytest, pytest-cov, pytest-html
-- Main libraries used by the examples: Faker, python-jose, pdf2docx, Pillow, rembg, OpenCV, qrcode, Matplotlib,
+- Main libraries used by the examples: Faker, PyJWT, pdf2docx, Pillow, rembg, OpenCV, qrcode, Matplotlib,
   NumPy, pandas, requests, paramiko, psycopg2, shortuuid, tqdm, progress
 - Code quality: ruff, black, isort, mypy, pre-commit
 - CI: GitHub Actions ([ci.yml](.github/workflows/ci.yml)) running tests on Python 3.11 and 3.12
