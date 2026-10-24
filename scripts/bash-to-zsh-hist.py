@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # This is how I used it:
 # $ cat ~/.bash_history | python bash-to-zsh-hist.py >> ~/.zsh_history

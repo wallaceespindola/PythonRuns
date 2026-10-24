@@ -70,3 +70,13 @@ output = ["*.csv", "*.docx", "*.png"]
 resources = ["*.jpeg", "*.pdf", "*.png"]
 scripts = ["*.sh", "*.py"]
 tests = ["*.py"]
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.ruff]
+line-length = 120

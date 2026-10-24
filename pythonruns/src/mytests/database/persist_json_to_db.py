@@ -8,14 +8,12 @@ conn = sqlite3.connect(":memory:")
 cursor = conn.cursor()
 
 # Create a table to store JSON data
-cursor.execute(
-    """
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS json_data (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     data TEXT NOT NULL
 )
-"""
-)
+""")
 conn.commit()
 
 # Initialize the JSON storage in the database (if empty)

@@ -46,14 +46,12 @@ def connectDB():
         cursor = conn.cursor()
 
         # Create table if not exists
-        cursor.execute(
-            """
+        cursor.execute("""
         CREATE TABLE IF NOT EXISTS data (
             id SERIAL PRIMARY KEY,
             info TEXT NOT NULL
         )
-        """
-        )
+        """)
         conn.commit()
     except Exception as e:
         print(f"Error connecting to the database: {e}")

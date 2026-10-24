@@ -190,7 +190,7 @@ def main(restart_services, send_only_email):
 
     # Check if any URL checks failed
     if down_urls:
-        message = f"One or more URLs are down:\n\n" + "\n".join(down_urls)
+        message = "One or more URLs are down:\n\n" + "\n".join(down_urls)
         logger.warning(message)
 
         # Send email if the -e or --email option is provided

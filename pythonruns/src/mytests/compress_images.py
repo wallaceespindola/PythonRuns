@@ -54,7 +54,7 @@ def compress_png(input_path, max_size_kb):
 
 
 def process_images(folder, max_size_kb=100):
-    print(f"========== Resizing images... ==========")
+    print("========== Resizing images... ==========")
     for root, dirs, files in os.walk(folder):
         for file in files:
             file_path = os.path.join(root, file)

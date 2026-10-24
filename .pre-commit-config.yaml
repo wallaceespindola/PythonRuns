@@ -18,7 +18,7 @@ repos:
   #        always_run: true
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace # Removes trailing whitespace
       - id: end-of-file-fixer # Ensures files end with a newline
@@ -40,7 +40,7 @@ repos:
       # Note: requirements-txt-fixer removed since we use uv with pyproject.toml + uv.lock
 
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1
+    rev: v1.38.0
     hooks:
       - id: yamllint # Lints YAML files for style and syntax
         args: # Allows lines up to 120 characters, ignores rule of '---' at the beginning of the file
@@ -54,14 +54,14 @@ repos:
           ]
 
   - repo: https://github.com/PyCQA/autoflake
-    rev: v2.3.1
+    rev: v2.4.0
     hooks:
       - id: autoflake # removes unused imports and unused variables
         args: # Skips processing of __init__.py files to avoid unintended removal of imports // Modifies files in-place
           [--remove-all-unused-imports, --ignore-init-module-imports, --in-place]
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
+    rev: 9.0.2
     hooks:
       - id: isort # Sorts Python imports
         args: # Adheres to black formatting style, max line length 120 characters
@@ -75,7 +75,7 @@ repos:
         args: ["--print-width", "120"]
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.3
     hooks:
       - id: codespell # Spell checking - checks for common misspellings in text files
         name: codespell
@@ -85,14 +85,14 @@ repos:
         types: [text]
 
   - repo: https://github.com/google/yapf
-    rev: v0.40.2
+    rev: v0.43.0
     hooks:
       - id: yapf # Google formatter to keep PEP 8 rules
         name: yapf
         args: [--style, google]
 
   - repo: https://github.com/psf/black
-    rev: 24.4.2
+    rev: 26.10.1
     hooks:
       - id: black # Formats Python code to adhere to PEP 8
         args: ["--line-length", "120"] # Allows lines up to 120 characters
@@ -100,7 +100,7 @@ repos:
         args: ["--line-length", "120"] # Allows lines up to 120 characters
 
   - repo: https://github.com/sqlfluff/sqlfluff
-    rev: 3.2.0
+    rev: 4.4.0
     hooks:
       - id: sqlfluff-lint # Ensures SQL code adheres to the standards (dialect-specific rules, formatting styles, etc.)
         args: [--config, "./pyproject.toml"]

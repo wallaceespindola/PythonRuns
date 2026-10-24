@@ -4,8 +4,8 @@ def float_numbers():
     # Use of String Formatting
     float1 = 563.78453
     print(f"Original: {float1}")
-    print("Formatted 2 decimals: {:3.1f}".format(float1))
-    print("Formatted 2 decimals: {:5.2f}".format(float1))
+    print(f"Formatted 2 decimals: {float1:3.1f}")
+    print(f"Formatted 2 decimals: {float1:5.2f}")
 
     print("---------------------------")
 

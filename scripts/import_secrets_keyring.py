@@ -118,7 +118,7 @@ def migrate_items(source_label, destination_label):
             print(f"Failed to migrate '{label}': {e}")
             failed_count += 1
 
-    print(f"\nMigration complete.")
+    print("\nMigration complete.")
     print(f"Successfully migrated: {migrated_count} items")
     if failed_count > 0:
         print(f"Failed to migrate: {failed_count} items")

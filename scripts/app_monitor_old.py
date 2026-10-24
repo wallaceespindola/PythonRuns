@@ -166,7 +166,7 @@ def main(restart_services):
             restart_python_apps()
 
         # Send email notification
-        message = f"One or more URLs are down:\n\n" + "\n".join(down_urls)
+        message = "One or more URLs are down:\n\n" + "\n".join(down_urls)
         send_email(message)
     else:
         logger.info("======= All URLs are up and running correctly. =======")

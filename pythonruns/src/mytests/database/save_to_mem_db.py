@@ -8,14 +8,12 @@ conn = sqlite3.connect(":memory:")
 cursor = conn.cursor()
 
 # Create a table in the in-memory database
-cursor.execute(
-    """
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS data (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     info TEXT NOT NULL
 )
-"""
-)
+""")
 conn.commit()
 
 # Define the entry variable globally to be used inside functions
