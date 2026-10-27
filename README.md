@@ -1,13 +1,10 @@
-![Python](https://www.python.org/static/community_logos/python-logo-generic.svg)
-
 # PythonRuns
 
-![Apache 2.0 License](https://img.shields.io/badge/License-Apache2.0-orange)
-![Python](https://img.shields.io/badge/Built_with-Python-blue)
-![Pytest](https://img.shields.io/badge/Powered_by-Pytest-green)
-[![CI](https://github.com/wallaceespindola/PythonRuns/actions/workflows/ci.yml/badge.svg)](https://github.com/wallaceespindola/PythonRuns/actions/workflows/ci.yml)
+![PythonRuns](docs/images/banner.png)
 
-Tests on Python Code Examples.
+[![Apache 2.0 License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE) [![Python 3.11 | 3.12](https://img.shields.io/badge/Python-3.11_%7C_3.12-3776AB?logo=python&logoColor=white)](pyproject.toml) [![uv](https://img.shields.io/badge/Managed_with-uv-DE5FE9?logo=uv&logoColor=white)](https://docs.astral.sh/uv/) [![pytest](https://img.shields.io/badge/Tested_with-pytest-0A9EDC?logo=pytest&logoColor=white)](tests/) [![Ruff](https://img.shields.io/badge/Lint-Ruff-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/) [![Code style: black](https://img.shields.io/badge/Code_style-black-000000)](https://github.com/psf/black) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-FAB040?logo=pre-commit&logoColor=white)](.pre-commit-config.yaml) [![CI](https://github.com/wallaceespindola/PythonRuns/actions/workflows/ci.yml/badge.svg)](https://github.com/wallaceespindola/PythonRuns/actions/workflows/ci.yml) [![Pre-Commit](https://github.com/wallaceespindola/PythonRuns/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/wallaceespindola/PythonRuns/actions/workflows/pre-commit.yml)
+
+A playground of runnable Python examples: one idea per script, small enough to read in a minute.
 
 A collection of small, self-contained Python scripts and proofs of concept: formatting and language
 features, file and image utilities, SQLite/PostgreSQL persistence with Tkinter UIs, calls to public
@@ -24,6 +21,7 @@ Brazilian government APIs, JWT handling and more. Each example is a standalone m
 - [Running Tests](#running-tests)
 - [Project Structure](#project-structure)
 - [Latest Articles, Publications and Tech-Talks](#-latest-articles-publications-and-tech-talks)
+- [Support](#support)
 - [Author](#author)
 - [License](#license)
 
@@ -262,24 +260,35 @@ PythonRuns/
 - **[[DZone] Secure Password Hashing in Java: Best Practices and Code Examples](https://bit.ly/secure-password-hashing-in-java)** - Secure password hashing using modern algorithms like BCrypt, Argon2, and PBKDF2 with salting and computational intensity for better security, as alternative to SHA-512.
 - **More available on [my LinkedIn page](https://www.linkedin.com/in/wallaceespindola)**.
 
+## Support
+
+If you find this project helpful, please consider:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support%20my%20work-FFDD00?style=flat&labelColor=101010&logo=buy-me-a-coffee&logoColor=white)](https://www.buymeacoffee.com/wallace.espindola) [![Star on GitHub](https://img.shields.io/badge/Star%20on%20GitHub-PythonRuns-181717?style=flat&logo=github)](https://github.com/wallaceespindola/PythonRuns)
+
+[![GitHub stars](https://img.shields.io/github/stars/wallaceespindola/PythonRuns?style=social)](https://github.com/wallaceespindola/PythonRuns/stargazers) [![GitHub forks](https://img.shields.io/github/forks/wallaceespindola/PythonRuns?style=social)](https://github.com/wallaceespindola/PythonRuns/network/members) [![GitHub watchers](https://img.shields.io/github/watchers/wallaceespindola/PythonRuns?style=social)](https://github.com/wallaceespindola/PythonRuns/watchers) [![GitHub issues](https://img.shields.io/github/issues/wallaceespindola/PythonRuns)](https://github.com/wallaceespindola/PythonRuns/issues) [![GitHub last commit](https://img.shields.io/github/last-commit/wallaceespindola/PythonRuns)](https://github.com/wallaceespindola/PythonRuns/commits/main)
+
+Star the repo on GitHub if an example saved you some time. It motivates me a lot!
+
 ## Author
 
-- Wallace Espindola, Sr. Software Engineer / Solution Architect / Java & Python Dev
-- **LinkedIn:** [linkedin.com/in/wallaceespindola/](https://www.linkedin.com/in/wallaceespindola/)
-- **GitHub:** [github.com/wallaceespindola](https://github.com/wallaceespindola)
-- **E-mail:** [wallace.espindola@gmail.com](mailto:wallace.espindola@gmail.com)
-- **Twitter:** [@wsespindola](https://twitter.com/wsespindola)
-- **Gravatar:** [gravatar.com/wallacese](https://gravatar.com/wallacese)
-- **Dev Community:** [dev.to/wallaceespindola](https://dev.to/wallaceespindola)
-- **DZone Articles:** [DZone Profile](https://dzone.com/users/1254611/wallacese.html)
-- **Pulse Linkedin:** [LinkedIn Articles](https://www.linkedin.com/in/wallaceespindola/recent-activity/articles/)
-- **Website:** [W-Tech IT Solutions](https://www.wtechitsolutions.com/)
-- **Substack:** [wallaceespindola.substack.com](https://wallaceespindola.substack.com/)
-- **Medium:** [medium.com/@wallaceespindola](https://medium.com/@wallaceespindola)
-- **Slides:** [speakerdeck.com/wallacese](https://speakerdeck.com/wallacese)
+Wallace Espindola, Solution Architect
+
+- Email: <wallace.espindola@gmail.com>
+- LinkedIn: <https://www.linkedin.com/in/wallaceespindola/>
+- GitHub: <https://github.com/wallaceespindola/>
+- Twitter/X: [@wsespindola](https://x.com/wsespindola)
+- Substack: [Code & Coffee by Wallace Espindola](https://wallaceespindola.substack.com)
+- Medium: <https://medium.com/@wallaceespindola>
+- Dev.to: <https://dev.to/wallaceespindola>
+- DZone: <https://dzone.com/users/1254611/wallacese.html>
+- Speaker Deck: <https://speakerdeck.com/wallacese>
+- Speaker profile: <https://sessionize.com/wallace-espindola/>
+- Company: [www.wtechitsolutions.com](http://www.wtechitsolutions.com)
+- Buy Me a Coffee: <https://www.buymeacoffee.com/wallace.espindola>
 
 ## License
 
 - This project is released under the Apache 2.0 License.
 - See the [LICENSE](LICENSE) file for details.
-- Copyright © 2025 [Wallace Espindola](https://github.com/wallaceespindola/).
+- Copyright © 2026 [Wallace Espindola](https://github.com/wallaceespindola/).
