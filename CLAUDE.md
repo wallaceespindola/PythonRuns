@@ -19,7 +19,7 @@ Python playground: small standalone scripts and proofs of concept, not one app.
 ## Dependencies
 
 - `pyproject.toml` is the source of truth; always commit the regenerated `uv.lock`.
-- Python `>=3.11,<3.13` (CI matrix 3.11 + 3.12) — a lock must resolve for both.
+- Python `>=3.14` (CI on 3.14).
 - Dependabot alerts target `uv.lock`; fix by raising the floor in `pyproject.toml`, then `uv lock --upgrade`.
 - JWT uses PyJWT (python-jose was dropped: unpatched critical CVE). Secrets come from env (`.env.example`).
 - `numpy>=2.3` is required by current `rembg`; don't re-pin `numpy<2`.
